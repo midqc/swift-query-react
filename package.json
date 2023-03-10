@@ -10,12 +10,16 @@
   "scripts": {
     "build": "node utils/build.js",
     "start": "node utils/webserver.js",
+    "tailwind": "npx tailwindcss -i ./tailwind.input.css -o ./src/pages/tailwind.css --watch",
     "prettier": "prettier --write '**/*.{js,jsx,ts,tsx,json,css,scss,md}'"
   },
   "dependencies": {
     "framer-motion": "^10.2.3",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-helmet": "^6.1.0",
+    "react-redux": "^8.0.5",
+    "react-use": "^17.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.12",
