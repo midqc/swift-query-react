@@ -12,6 +12,19 @@ import SearchBar from '../../components/SearchBar';
 import useThemeContext from '../../hooks/useThemeContext';
 import useLocalStorage from '../../hooks/useLocalStorage';
 
+const motionVariants = {
+  springy: { stiffness: 300, damping: 20 },
+  bouncy: { stiffness: 400, damping: 15 },
+  slow: { stiffness: 100, damping: 20 },
+  fast: { stiffness: 800, damping: 10 },
+  smooth: { stiffness: 200, damping: 30 },
+  wobbly: { stiffness: 100, damping: 10 },
+  jumpy: { stiffness: 500, damping: 30 },
+  elastic: { stiffness: 300, damping: 10 },
+  snappy: { stiffness: 700, damping: 20 },
+  rubbery: { stiffness: 200, damping: 5 },
+};
+
 const Newtab = () => {
 
   const divThemeRef = useRef(null);
@@ -24,7 +37,7 @@ const Newtab = () => {
         <title>Swift Tab</title>
         <link rel="icon" type="image/png" href={favicon} />
       </Helmet>
-      <div ref={divThemeRef} className="font-pulp-regular">
+      <div ref={divThemeRef} className="font-regular">
       <div className="App">
         <header className="App-header">
           <motion.img
@@ -35,8 +48,7 @@ const Newtab = () => {
               transition: {
                 duration: 0.5,
                 type: 'spring',
-                damping: 8,
-                stiffness: 160,
+                ...motionVariants.wobbly
               },
             }}
             whileHover={{
@@ -44,8 +56,7 @@ const Newtab = () => {
               transition: {
                 duration: 0.5,
                 type: 'spring',
-                damping: 8,
-                stiffness: 160,
+                ...motionVariants.wobbly
               },
             }}
             whileTap={{
@@ -53,8 +64,7 @@ const Newtab = () => {
               transition: {
                 duration: 0.5,
                 type: 'spring',
-                damping: 8,
-                stiffness: 160,
+                ...motionVariants.wobbly
               },
             }}
             src={logo}
@@ -74,7 +84,7 @@ const Newtab = () => {
           </a>
         </header>
       </div>
-        <SearchBar/>
+         <SearchBar/>
         </div>
     </>
   );

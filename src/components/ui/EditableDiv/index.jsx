@@ -1,45 +1,41 @@
-import React, { useRef, useState } from 'react';
-import styles from './EditableDiv.module.css';
+import React, { useRef } from 'react';
 
-export const Editable = () => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [content, setContent] = useState('');
+const EditableDiv = ({ defaultValue }) => {
   const divRef = useRef(null);
 
-  function handleKeyDown(event) {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      // Perform your action here
-      console.log('Enter key pressed!');
-    } else if (event.key === 'Tab') {
-      event.preventDefault();
-      if (!isExpanded) {
-        setIsExpanded(true);
-        divRef.current.classList.add(styles.expanded);
-      }
+  const handleInputBlur = () => {
+    const textContent = divRef.current.textContent.trim();
+    if (!textContent) {
+      divRef.current.textContent = defaultValue;
     }
-  }
+  };
 
-  function handleBlur() {
-    if (isExpanded) {
-      setIsExpanded(false);
-      divRef.current.classList.remove(styles.expanded);
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      divRef.current.blur();
     }
-  }
+  };
 
-  function handleChange(event) {
-    setContent(event.target.innerText);
-  }
+  const handleInputFocus = () => {
+    const textContent = divRef.current.textContent.trim();
+    if (textContent === defaultValue) {
+      divRef.current.textContent = '';
+    }
+  };
 
   return (
     <div
       ref={divRef}
       contentEditable
-      className={`${styles.editable} ${isExpanded ? styles.expanded : ''}`}
+      suppressContentEditableWarning
+      onBlur={handleInputBlur}
       onKeyDown={handleKeyDown}
-      onBlur={handleBlur}
-      onInput={handleChange}
-      dangerouslySetInnerHTML={{ __html: content }}
-    />
+      onFocus={handleInputFocus}
+    >
+      {defaultValue}
+    </div>
   );
-}
+};
+
+export default EditableDiv;
