@@ -1,23 +1,36 @@
 @font-face {
-    font-family: 'Medium';
-    font-weight: light;
-    font-style: normal;
-
-    src: url("../../assets/PulpDisplay-Medium.woff2") format("woff2")
+    font-family: 'Light';
+    src: url("../../assets/PulpDisplay-light.woff2") format("woff2")
 }
 
 @font-face {
     font-family: 'Regular';
-    font-weight: normal;
-    font-style: normal;
-
     src: url("../../assets/PulpDisplay-Regular.woff2") format("woff2")
 }
 
-.font-medium {
- font-family: 'Medium', Arial, Helvetica, sans-serif;
+@font-face {
+    font-family: 'Medium';
+    src: url("../../assets/PulpDisplay-Medium.woff2") format("woff2")
 }
 
-.font-regular {
- font-family: 'Regular', Arial, Helvetica, sans-serif;
+
+.font-default-light {
+    font-smooth: never;
+    font-size-adjust: 0.5;
+    text-rendering: optimizeLegibility;
+    font-family: 'Light', Arial, Helvetica, sans-serif;
+}
+
+.font-default-regular {
+    font-smooth: never;
+    font-size-adjust: 0.5;
+    text-rendering: optimizeLegibility;
+    font-family: 'Regular', Arial, Helvetica, sans-serif;
+}
+
+.font-default-medium {
+    font-smooth: never;
+    font-size-adjust: 0.5;
+    text-rendering: optimizeLegibility;
+    font-family: 'Medium', Arial, Helvetica, sans-serif;
 }

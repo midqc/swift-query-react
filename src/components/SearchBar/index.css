@@ -1,0 +1,18 @@
+#highlightContainer::-webkit-scrollbar {
+  display: none;
+}
+
+#highlightContainer {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+#inputContainer {
+    color: transparent;
+    caret-color: #fff; /* set the color of the cursor */
+  }
+  
+  #inputContainer::placeholder {
+    color: #999; /* set the color of the placeholder text */
+  }
+  

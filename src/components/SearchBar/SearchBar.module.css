@@ -1,0 +1,4 @@
+/* For showing through placeholder */
+.input-container input:not([value=""]) {
+    -webkit-text-fill-color: transparent;
+  }
