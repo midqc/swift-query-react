@@ -5,7 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title></title>
   </head>
-  <body>
+  <style>
+    body {
+      background-color: #e0e0e0; 
+      overflow: hidden
+    }
+
+    body {
+        background-color: var(--bg-color);
+        background-image: var(--bg-img);
+        background-repeat: repeat-x;
+        background-size: auto 100vh;
+        background-position: center;
+        transition: background-image 0s ease-in-out;
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #212121;
+      }
+    }
+    </style>
+  <body >
     <div id="app-container"></div>
   </body>
 </html>

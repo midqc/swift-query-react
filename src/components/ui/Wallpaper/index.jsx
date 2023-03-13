@@ -60,18 +60,12 @@ const Wallpaper = ({ themeName, mode}) => {
   const theme = themeName && themes[themeName] ? themes[themeName] : themes.default;
 
   useEffect(() => {
-    document.body.style.backgroundColor = mode === 'dark' ? theme.dark.bgColor : theme.light.bgColor;
-    document.body.style.backgroundImage = `url(${mode === 'dark' ? theme.dark.bgImg : theme.light.bgImg})`;
-    document.body.style.backgroundRepeat = 'repeat-x';
-    document.body.style.backgroundSize = 'auto 100vh';
-    document.body.style.backgroundPosition = 'center';
+    document.body.style.setProperty('--bg-color', mode === 'dark' ? theme.dark.bgColor : theme.light.bgColor);
+    document.body.style.setProperty('--bg-img', `url(${mode === 'dark' ? theme.dark.bgImg : theme.light.bgImg})`);
 
     return () => {
-      document.body.style.backgroundColor = null;
-      document.body.style.backgroundImage = null;
-      document.body.style.backgroundRepeat = null;
-      document.body.style.backgroundSize = null;
-      document.body.style.backgroundPosition = null;
+      document.body.style.removeProperty('--bg-color');
+      document.body.style.removeProperty('--bg-img');
     };
   }, [themeName, mode, theme]);
 
