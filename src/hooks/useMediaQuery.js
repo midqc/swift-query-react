@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export function useMediaQueries() {
+export function useMediaQuery() {
   const [isSm, setIsSm] = useState(window.matchMedia('(min-width: 640px)').matches);
   const [isMd, setIsMd] = useState(window.matchMedia('(min-width: 768px)').matches);
   const [isLg, setIsLg] = useState(window.matchMedia('(min-width: 1024px)').matches);
@@ -56,18 +56,18 @@ export function useMediaQueries() {
 
 /* ---------------------------------- usage --------------------------------- */
 
-// import { useMediaQueries } from '../../hooks/useMediaQueries';
+// import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 // function MyComponent() {
-//   const { isSm, isMd, isLg, isXl, is2xl } = useMediaQueries();
+//   const { isSm, isMd, isLg, isXl, is2xl } = useMediaQuery();
 
 //   return (
-//     <div>
-//       {isSm && <p>Small screen view</p>}
-//       {isMd && <p>Medium screen view</p>}
-//       {isLg && <p>Large screen view</p>}
-//       {isXl && <p>Extra-large screen view</p>}
-//       {is2xl && <p>2XL screen view</p>}
-//     </div>
+    // <div>
+    //   {isSm && <p>Small screen view</p>}
+    //   {isMd && <p>Medium screen view</p>}
+    //   {isLg && <p>Large screen view</p>}
+    //   {isXl && <p>Extra-large screen view</p>}
+    //   {is2xl && <p>2XL screen view</p>}
+    // </div>
 //   );
 // }
