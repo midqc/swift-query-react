@@ -16,16 +16,13 @@ function ClipboardText() {
   } = useMotionVariants();
 
   const [clipboardText, setClipboardText] = useState('');
-  const [maxLength, setMaxLength] = useState(10);
-  const [targetMaxLength, setTargetMaxLength] = useState(10);
-
-  const controls = useAnimation();
+  const [maxLength, setMaxLength] = useState(6);
 
   const handleCopy = async () => {
     const text = await navigator.clipboard.readText();
 
     // Check if the text only contains spaces or is shorter than 3 characters
-    if (/^\s*$/.test(text) || text.length <= 3) {
+    if (/^\s*$/.test(text) || text.length <= 0) {
       return;
     }
 
@@ -42,7 +39,7 @@ function ClipboardText() {
       const text = await navigator.clipboard.readText();
 
       // Check if the text only contains spaces or is shorter than 3 characters
-      if (/^\s*$/.test(text) || text.length <= 3) {
+      if (/^\s*$/.test(text) || text.length <= 0) {
         return;
       }
 
@@ -67,62 +64,58 @@ function ClipboardText() {
     };
   }, []);
 
-  useEffect(() => {
-    const timerId = setTimeout(() => {
-      if (targetMaxLength > maxLength) {
-        setMaxLength(maxLength + 1);
-      } else if (targetMaxLength < maxLength) {
-        setMaxLength(maxLength - 1);
-      }
-    }, 10);
-
-    return () => clearTimeout(timerId);
-  }, [maxLength, targetMaxLength]);
-
-  const animateNumber = (num) => {
-    setTargetMaxLength(num);
-    controls.start((i) => ({
-      clipboardTextMaxLength: num,
-      transition: {
-        type: 'spring',
-        restDelta: 0.001,
-        ...slowMotion,
-        delay: i * 0.05,
-      },
-    }));
-  };
-
-  const handleMouseEnter = () => {
-    animateNumber(25);
-  };
-
-  const handleMouseLeave = () => {
-    animateNumber(10);
-  };
-
   return (
     <div className="flex absolute left-0 justify-center w-screen">
       {clipboardText && (
         <span className="cursor-pointer flex flex-row justify-center items-center">
-          &#160;
           <motion.span
-            className="relative w-fit flex bg-yellow-400/10 dark:bg-yellow-600/10 items-center align-middle select-none px-2 rounded-lg shadow-md text-base text-yellow-600 dark:text-yellow-400"
+            className="relative w-fit flex border-[1px] border-black/10 dark:border-white/5 bg-yellow-400/10 dark:bg-yellow-600/10 items-center focus:outline-none align-middle select-none px-4 rounded-full shadow-md text-base text-yellow-600 dark:text-yellow-400"
             style={{ top: '3.8rem' }}
-            layout="position"
             initial={{ scale: 1.2 }}
-            animate={{ scale: 1 }}
+            animate={{ scale: 1.1 }}
             whileTap={{ scale: 0.8 }}
             transition={{
               type: 'spring',
               restDelta: 0.001,
-              ...slowMotion,
+              ...springyMotion,
             }}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
           >
-            {clipboardText.trim().length > maxLength
-              ? clipboardText.trim().slice(0, maxLength) + '...'
-              : clipboardText.trim()}
+            {(() => {
+              const textLength = clipboardText.trim().length;
+              if (textLength > maxLength) {
+                const diff = textLength - maxLength;
+                let trimmedText = clipboardText.trim();
+                let trimmedTextFront;
+                let trimmedTextEnd;
+                let ellipsis = '';
+                if (diff > 6) {
+                  trimmedTextFront = trimmedText.slice(0, maxLength);
+                  ellipsis = <span className="opacity-50">...</span>;
+                  trimmedTextEnd = trimmedText.slice(textLength - 3);
+                } else if (diff === 5) {
+                  trimmedTextFront = trimmedText.slice(0, maxLength);
+                  ellipsis = <span className="opacity-50">...</span>;
+                  trimmedTextEnd = trimmedText.slice(textLength - 2);
+                } else if (diff === 4) {
+                  trimmedTextFront = trimmedText.slice(0, maxLength);
+                  ellipsis = <span className="opacity-50">...</span>;
+                  trimmedTextEnd = trimmedText.slice(textLength - 1);
+                } else {
+                  trimmedTextFront = trimmedText.slice(0, maxLength);
+                  ellipsis = <span className="opacity-50">...</span>;
+                  trimmedTextEnd = '';
+                }
+                return (
+                  <>
+                    {trimmedTextFront}
+                    {ellipsis}
+                    {trimmedTextEnd}
+                  </>
+                );
+              } else {
+                return clipboardText.trim();
+              }
+            })()}
           </motion.span>
         </span>
       )}

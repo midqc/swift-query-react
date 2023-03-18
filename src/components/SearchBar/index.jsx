@@ -6,7 +6,14 @@ import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useMotionVariants } from '../../hooks/useMotionVariants';
 
 const SearchBar = () => {
-  const { springyMotion, bouncyMotion, slowMotion, smoothMotion, fastMotion, rubberyMotion } = useMotionVariants();
+  const {
+    springyMotion,
+    bouncyMotion,
+    slowMotion,
+    smoothMotion,
+    fastMotion,
+    rubberyMotion,
+  } = useMotionVariants();
 
   const { isSm, isMd, isLg, isXl, is2xl } = useMediaQuery();
 
@@ -76,17 +83,44 @@ const SearchBar = () => {
   const inputRef = useRef(null);
   const highlightRef = useRef(null);
 
+  const openLink = (url, searchValue, isNewTab) => {
+    if (isNewTab) {
+      window.open(`${url}${searchValue}`, '_blank');
+    } else {
+      window.location.href = `${url}${searchValue}`;
+    }
+  };
+
   const handleKeyDown = (event) => {
     if (event.key === 'Enter') {
-      console.log('User pressed Enter!');
       event.preventDefault();
-      if (isNewTab) {
-        window.open(
-          `https://www.youtube.com/results?search_query=${searchValue}`,
-          '_blank'
-        );
+
+      //calculate the length of the firstWord
+      let matchFirstWord = searchValue.match(/^[-.=\/,\w]+/);
+      let firstWord = matchFirstWord ? matchFirstWord[0] : "";
+      let nameLength = firstWord.length + 1;
+
+      // check if searchValue only contains spaces
+      if (/^\s*$/.test(searchValue)) {
+      } else if (searchValue.startsWith('-')) {
+        // match the first word if the first word id "-yt" then return true else return false
+        if (firstWord === '-yt') {
+          // searchValue.slice(4) slices the "-yt " from the beginning of the string
+          openLink(
+            'https://www.youtube.com/results?search_query=',
+            searchValue.slice(nameLength),
+            isNewTab
+          );
+        }
+      } else if (searchValue.startsWith('/')) {
+      } else if (searchValue.startsWith('=')) {
+        // if the searchValue starts with =mini, then toggle mini
+        if (searchValue.startsWith('=mini')) {
+          handleToggleMini();
+        }
+      } else if (searchValue.startsWith('.')) {
+        sendMessage(searchValue.replace(/&nbsp;/g, ' '));
       } else {
-        window.location.href = `https://www.youtube.com/results?search_query=${searchValue}`;
       }
     }
   };
@@ -131,8 +165,16 @@ const SearchBar = () => {
     return array.some((term) => new RegExp(`${term}`).test(word));
   };
 
+  chrome.runtime.sendMessage({ message: "getBrowserData" }, function(response) {
+    console.log(response);
+  });
+
+  let browserDataStr = localStorage.getItem("browserData");
+  let browserData = browserDataStr ? JSON.parse(browserDataStr) : null;
+  let browserNames = browserData ? Object.keys(browserData) : [];
+
   const renderHighlightedText = () => {
-    const words = searchValue.split(/(?![/=+-])(\W+)/);
+    const words = searchValue.split(/(?![/=+-.])(\W+)/);
     return (
       <div ref={highlightRef}>
         {words.map((word, index) => (
@@ -140,9 +182,11 @@ const SearchBar = () => {
             key={index}
             className={
               isFirstMatch(word, searchTerms.start)
-                ? 'highlighted text-blue-600 transition-colors before:text-white duration-200 ease-in-out'
+                ? 'highlighted text-blue-600 dark:text-blue-500 transition-colors before:text-white duration-200 ease-in-out'
                 : isMatch(word, searchTerms.middle)
                 ? 'highlighted text-green-600 transition-colors before:text-white duration-200 ease-in-out'
+                : /^\.\w+$/.test(word) && browserNames.includes(word.slice(1))
+                ? 'highlighted text-yellow-600 transition-colors before:text-white duration-200 ease-in-out'
                 : 'transition-colors before:text-current duration-200 ease-in-out'
             }
           >
@@ -153,9 +197,7 @@ const SearchBar = () => {
     );
   };
 
-  const [message, setMessage] = useState('');
-
-  const sendMessage = () => {
+  const sendMessage = (message) => {
     chrome.runtime.sendMessage({ message }, (response) => {
       console.log('Response:', response.message);
     });
@@ -186,108 +228,102 @@ const SearchBar = () => {
           }}
           className="absolute w-screen flex justify-center"
         >
-            <motion.div
-              variants={searchWidthVariants}
-              initial={
-                isMini
-                  ? 'mini'
-                  : 'full' && isMini
-                  ? searchWidthVariants.mini.width
-                  : searchWidthVariants.full.width
-              }
-              animate={isMini ? 'mini' : 'full'}
-              
-              transition={{
-                type: 'spring',
-                opacity: { width: 0.3 },
-                restDelta: 0.001,
-                ...smoothMotion,
-              }}
-            >
-              <div className="w-full z-[98]">
-                <input
-                  id="inputContainer"
-
-                  onFocus={() => setIsInputFocused(true)}
-                  onBlur={() => setIsInputFocused(false)}
-
-                  onMouseOver={() => setIsInputHovered(true)}
-                  onMouseOut={() => setIsInputHovered(false)}
-
-                  onKeyDown={handleKeyDown}
-
-                  style={{
-                    position: 'relative',
-                    top: '-1px',
-                    left: '0',
-                    width: '100%',
-                    borderRadius: '28px',
-                    height: '80px',
-                    boxShadow: 'rgba(0, 0, 0, 0.25) 0px 25px 50px -12px',
+          <motion.div
+            variants={searchWidthVariants}
+            initial={
+              isMini
+                ? 'mini'
+                : 'full' && isMini
+                ? searchWidthVariants.mini.width
+                : searchWidthVariants.full.width
+            }
+            animate={isMini ? 'mini' : 'full'}
+            transition={{
+              type: 'spring',
+              opacity: { width: 0.3 },
+              restDelta: 0.001,
+              ...smoothMotion,
+            }}
+          >
+            <div className="w-full z-[98]">
+              <input
+                id="inputContainer"
+                onFocus={() => setIsInputFocused(true)}
+                onBlur={() => setIsInputFocused(false)}
+                onMouseOver={() => setIsInputHovered(true)}
+                onMouseOut={() => setIsInputHovered(false)}
+                onKeyDown={handleKeyDown}
+                style={{
+                  position: 'relative',
+                  top: '-1px',
+                  left: '0',
+                  width: '100%',
+                  borderRadius: '28px',
+                  height: '80px',
+                  boxShadow: 'rgba(0, 0, 0, 0.25) 0px 25px 50px -12px',
+                }}
+                className="bg-[#333333] overflow-hidden input-container select-none focus:outline-none overflow-wrap p-5 text-[2.5rem]"
+                spellCheck="false"
+                placeholder="Search or -query"
+                autoComplete="off"
+                value={searchValue}
+                onChange={handleSearchChange}
+                onScroll={handleInputScroll}
+                ref={inputRef}
+              />
+              <div className="absolute top-0 left-0 w-screen flex justify-center pointer-events-none z-[99]">
+                <motion.div
+                  // className='px-5'
+                  variants={searchWidthVariants}
+                  initial={
+                    isMini
+                      ? 'mini'
+                      : 'full' && isMini
+                      ? searchWidthVariants.mini.width
+                      : searchWidthVariants.full.width
+                  }
+                  animate={isMini ? 'mini' : 'full'}
+                  transition={{
+                    type: 'spring',
+                    opacity: { width: 0.3 },
+                    restDelta: 0.001,
+                    ...smoothMotion,
                   }}
-                  className="bg-[#333333] selection:text-blue-600 selection:bg-transparent overflow-hidden input-container select-none focus:outline-none overflow-wrap p-5 text-[2.5rem]"
-                  spellCheck="false"
-                  placeholder="Search or -query"
-                  autoComplete="off"
-                  value={searchValue}
-                  onChange={handleSearchChange}
-                  onScroll={handleInputScroll}
-                  ref={inputRef}
-                />
-                <div className="absolute top-0 left-0 w-screen flex justify-center pointer-events-none z-[99]">
-                  <motion.div
-                    variants={searchWidthVariants}
-            
-                    initial={
-                      isMini
-                        ? 'mini'
-                        : 'full' && isMini
-                        ? searchWidthVariants.mini.width
-                        : searchWidthVariants.full.width
-                    }
-                    animate={isMini ? 'mini' : 'full'}
-                    transition={{
-                      type: 'spring',
-                      opacity: { width: 0.3 },
-                      restDelta: 0.001,
-                      ...smoothMotion,
+                >
+                  <div
+                    id="highlightContainer"
+                    style={{
+                      top: '0',
+                      left: '0',
+                      height: '80px',
+                      width: '100%',
+                      overflow: 'scroll',
+                      WebkitOverflowScrolling: 'touch',
+                      msOverflowStyle: 'none',
+                      scrollbarWidth: 'none',
+                      whiteSpace: 'pre-wrap',
                     }}
+                    className="bg-transparent focus:outline-none select-none pointer-events-none px-5 py-[0.625rem] text-[2.5rem] font-default-light text-white"
+                    onScroll={handleHighlightScroll}
+                    ref={highlightRef}
                   >
-                    <div
-                      id="highlightContainer"
-                      style={{
-                        top: '0',
-                        left: '0',
-                        height: '80px',
-                        width: '100%',
-                        overflow: 'scroll',
-                        WebkitOverflowScrolling: 'touch',
-                        msOverflowStyle: 'none',
-                        scrollbarWidth: 'none',
-                        whiteSpace: 'pre-wrap',
-                      }}
-                      className="bg-transparent focus:outline-none select-none pointer-events-none px-5 py-[0.625rem] text-[2.5rem] font-default-light text-white"
-                      onScroll={handleHighlightScroll}
-                      ref={highlightRef}
-                    >
-                      <span className="whitespace-nowrap">
-                        {renderHighlightedText()}
-                      </span>
-                    </div>
-                    
-                  </motion.div>
-                </div>
+                    <span className="whitespace-nowrap">
+                      {renderHighlightedText()}
+                    </span>
+                  </div>
+                </motion.div>
               </div>
+            </div>
           </motion.div>
         </motion.div>
       </motion.div>
-      <button
+      {/* <button
         className="z-[99] px-2 py-1 m-4 bg-blue-600/20 rounded-lg text-blue-400 font-xl"
         onClick={handleToggleMini}
       >
         Toggle Mini
-      </button>
-      <label>
+      </button> */}
+      {/* <label>
         <input
           className="z-[99]"
           type="checkbox"
@@ -295,15 +331,7 @@ const SearchBar = () => {
           onChange={handleCheckboxChange}
         />
         Open in new tab
-      </label>
-      <div>
-        <input
-          type="text"
-          value={message}
-          onChange={(event) => setMessage(event.target.value)}
-        />
-        <button onClick={sendMessage}>Send Message</button>
-      </div>
+      </label> */}
     </MotionConfig>
   );
 };

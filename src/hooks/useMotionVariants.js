@@ -1,7 +1,7 @@
 export function useMotionVariants(){
     return (
       {
-            springyMotion: { stiffness: 300, damping: 20 },
+            springyMotion: { stiffness: 400, damping: 15 },
             bouncyMotion: { stiffness: 600, damping: 6 },
             slowMotion: { stiffness: 200, damping: 60 },
             smoothMotion: { stiffness: 400, damping: 50 },
