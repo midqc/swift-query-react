@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, lazy, Suspense } from 'react';
 import { Helmet } from 'react-helmet';
 import { motion } from 'framer-motion';
 
@@ -6,19 +6,40 @@ import favicon from '../../assets/favicon.png';
 import './Newtab.css';
 import './Newtab.scss';
 
-import SearchBar from '../../components/SearchBar';
 import useThemeContext from '../../hooks/useThemeContext';
-import useLocalStorage from '../../hooks/useLocalStorage';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import Wallpaper from '../../components/ui/Wallpaper';
-import ClipboardText from '../../components/ClipboardText';
 
-const Newtab = () => {
+const LazyClipboard = lazy(() => import('../../components/Clipboard'));
+const LazySearchBar = lazy(() => import('../../components/SearchBar'));
+const LazyDock = lazy(() => import('../../components/Dock'));
+
+const withDelay = (Component, delay) => {
+  return class extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = { showComponent: false };
+      setTimeout(() => {
+        this.setState({ showComponent: true });
+      }, delay);
+    }
+
+    render() {
+      return this.state.showComponent ? <Component {...this.props} /> : null;
+    }
+  };
+};
+
+const Newtab = (props) => {
   const [theme, setTheme] = useState('default');
+  const divThemeRef = useRef(null);
 
   const { isSm, isMd, isLg, isXl, is2xl } = useMediaQuery();
 
-  const divThemeRef = useRef(null);
+
+  const DelayedClipboard = withDelay(LazyClipboard, 1000);
+  const DelayedSearchBar = withDelay(LazySearchBar, 0);
+  const DelayedDock = withDelay(LazyDock, 1000);
 
   return (
     <>
@@ -37,8 +58,30 @@ const Newtab = () => {
         className="App font-default-regular overflow-hidden h-screen w-screen"
         ref={divThemeRef}
       >
-        <ClipboardText />
-        <SearchBar />
+        <div className='opacity-10 dark:opacity-40' style={{ height: '120vh', width: '320vw', mixBlendMode: 'multiply', zIndex: '-9999', position: 'absolute', top: '0', left: '0', filter: 'grayscale(100%)' }}>
+          <svg
+            viewBox="0 0 1010 666"
+            xmlns='http://www.w3.org/2000/svg'>
+
+            <filter id='noiseFilter'>
+              <feTurbulence
+                type='fractalNoise'
+                baseFrequency='3.2'
+                numOctaves='3'
+                stitchTiles='stitch' />
+            </filter>
+
+            <rect
+              width='100%'
+              height='100%'
+              filter='url(#noiseFilter)' />
+          </svg>
+        </div>
+        <Suspense fallback={<div></div>}>
+          <DelayedClipboard />
+          <DelayedSearchBar />
+          <DelayedDock />
+        </Suspense>
       </div>
     </>
   );

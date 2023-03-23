@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext } from 'react';
 
 import { motion, MotionConfig, useAnimation } from 'framer-motion';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useMotionVariants } from '../../hooks/useMotionVariants';
-import * as Icons from '../Icons';
 
-function ClipboardText() {
+export const ClipboardContext = createContext();
+
+function Clipboard() {
   const {
     springyMotion,
     bouncyMotion,
@@ -64,21 +65,27 @@ function ClipboardText() {
     };
   }, []);
 
+  function handleClick() {
+    console.log('Clipboard Clicked');
+  }
+
   return (
     <div className="flex absolute left-0 justify-center w-screen">
+       
       {clipboardText && (
         <span className="cursor-pointer flex flex-row justify-center items-center">
           <motion.span
-            className="relative w-fit flex border-[1px] border-black/10 dark:border-white/5 bg-yellow-400/10 dark:bg-yellow-600/10 items-center focus:outline-none align-middle select-none px-4 rounded-full shadow-md text-base text-yellow-600 dark:text-yellow-400"
+            className="relative w-fit flex border-highlight border-[1px] border-black/30 dark:border-white/5 bg-yellow-500/60 dark:bg-yellow-600/10 items-center focus:outline-none align-middle select-none px-4 rounded-full shadow-md text-base text-yellow-800 dark:text-yellow-600 backdrop-blur-sm"
             style={{ top: '3.8rem' }}
-            initial={{ scale: 1.2 }}
-            animate={{ scale: 1.1 }}
+            initial={{  scale: 1, translateY: '1rem' }}
+            animate={{ scale: 1, translateY: '0rem'  }}
             whileTap={{ scale: 0.8 }}
             transition={{
               type: 'spring',
               restDelta: 0.001,
-              ...springyMotion,
+              ...smoothMotion,
             }}
+            onClick={handleClick}
           >
             {(() => {
               const textLength = clipboardText.trim().length;
@@ -123,4 +130,4 @@ function ClipboardText() {
   );
 }
 
-export default ClipboardText;
+export default Clipboard;

@@ -63,6 +63,10 @@ const Wallpaper = ({ themeName, mode}) => {
     document.body.style.setProperty('--bg-color', mode === 'dark' ? theme.dark.bgColor : theme.light.bgColor);
     document.body.style.setProperty('--bg-img', `url(${mode === 'dark' ? theme.dark.bgImg : theme.light.bgImg})`);
 
+    // Save the wallpaper theme and mode to localStorage
+    localStorage.setItem('wallpaperTheme', themeName);
+    localStorage.setItem('wallpaperMode', mode);
+
     return () => {
       document.body.style.removeProperty('--bg-color');
       document.body.style.removeProperty('--bg-img');

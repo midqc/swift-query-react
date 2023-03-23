@@ -30,10 +30,9 @@ function getBrowsers() {
   fetch(browsersUrl)
     .then((response) => response.json())
     .then((data) => {
-      console.log('Browsers:', data);
+      // console.log('Browsers:', data);
       // Store the fetched data in the Chrome local storage
-      chrome.storage.local.set({ browserData: data }, () => {
-      });
+      chrome.storage.local.set({ browserData: data }, () => {});
     })
     .catch((error) => {
       console.error('There was a problem fetching the browsers data:', error);
@@ -43,10 +42,27 @@ function getBrowsers() {
 getBrowsers();
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.message === "getBrowserData") {
-    let browserData = localStorage.getItem("browserData");
-    sendResponse({ data: browserData });
+  if (request.message === 'getBrowserData') {
+    chrome.storage.local.get('browserData', function (data) {
+      sendResponse({ data: data.browserData });
+    });
+    return true;
+  } else if (request.message === 'pinTab') {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      var currentTab = tabs[0];
+      var isPinned = currentTab.pinned;
+
+      chrome.tabs.move(currentTab.id, { index: 0 });
+      chrome.tabs.update(currentTab.id, { pinned: !isPinned });
+
+      var message = isPinned
+        ? 'Tab unpinned and moved to first position!'
+        : 'Tab pinned and moved to first position!';
+      sendResponse({ message: message });
+    });
+    return true;
   } else if (request.message.startsWith('.')) {
-    sendMessage(request.message)
+    sendMessage(request.message);
+    return true;
   }
 });

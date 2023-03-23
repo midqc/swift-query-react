@@ -1,11 +1,87 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
+import { useLocalStorage } from 'react-use';
 import './index.css';
 
 import { motion, MotionConfig } from 'framer-motion';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useMotionVariants } from '../../hooks/useMotionVariants';
 
+import useThemeContext from '../../hooks/useThemeContext';
+import Wallpaper from '../../components/ui/Wallpaper';
+
+import usePexelsAPI from '../../hooks/api/usePexelsAPI';
+
+let ccTLDs = [".com", ".org", ".net", ".edu", ".gov", ".co", ".io", ".info", ".biz", ".me", ".tv", ".us", ".ca", ".uk", ".au", ".mx", ".de", ".fr", ".es", ".it", ".nl", ".se", ".no", ".dk", ".ru", ".jp", ".cn", ".nz", ".za", ".in", ".ae"];
+
+let defaultShortcuts = [
+  { name: '-google', url: 'https://www.google.com/search?q=', info: 'search' },
+  { name: '-bing', url: 'https://www.bing.com/search?q=', info: 'search' },
+  {
+    name: '-duck',
+    url: 'https://duckduckgo.com/?q=',
+    info: 'search duckduckgo',
+  },
+  {
+    name: '-gmail',
+    url: 'https://mail.google.com/mail/u/0/#search/',
+    info: 'search google mail',
+  },
+  {
+    name: '-gml',
+    url: 'https://mail.google.com/mail/u/0/#search/',
+    info: 'search google mail',
+  },
+  { name: '-yahoo', url: 'https://search.yahoo.com/search?p=', info: 'search' },
+  {
+    name: '-yt',
+    url: 'https://www.youtube.com/results?search_query=',
+    info: 'search youtube',
+  },
+  {
+    name: '-ytm',
+    url: 'https://music.youtube.com/search?q=',
+    info: 'search youtube music',
+  },
+  { name: '-amz', url: 'https://www.amazon.com/s?k=', info: 'search amazon' },
+  {
+    name: '-img',
+    url: 'https://www.google.com/search?tbm=isch&q=',
+    info: 'search images',
+  },
+  {
+    name: '-drive',
+    url: 'https://drive.google.com/drive/u/0/search?q=',
+    info: 'search google drive',
+  },
+];
+
+const defaultLinks = [
+  { name: '/yt', url: 'https://www.youtube.com/', info: 'youtube.com' },
+  {
+    name: '/yth',
+    url: 'https://www.youtube.com/feed/history',
+    info: 'youtube history',
+  },
+  {
+    name: '/ytm',
+    url: 'https://music.youtube.com/',
+    info: 'music.youtube.com',
+  },
+  { name: '/amz', url: 'https://www.amazon.com/', info: 'amazon.com' },
+  { name: '/apl', url: 'https://www.apple.com/', info: 'apple.com' },
+];
+
 const SearchBar = () => {
+  const [links, setLinks] = useLocalStorage('links', defaultLinks);
+  const [shortcuts, setShortcuts] = useLocalStorage(
+    'shortcuts',
+    defaultShortcuts
+  );
+
+  let allNames = [...defaultLinks, ...defaultShortcuts].map(
+    (item) => item.name
+  );
+
   const {
     springyMotion,
     bouncyMotion,
@@ -46,8 +122,6 @@ const SearchBar = () => {
     mini: { width: '1800px' },
     full: { width: '400px' },
   };
-
-  let currentWidth = '';
 
   if (is2xl) {
     searchWidthVariants = {
@@ -91,42 +165,142 @@ const SearchBar = () => {
     }
   };
 
-  const handleKeyDown = (event) => {
+  let defaultUrl = 'https://www.google.com/search?q=';
+
+  const [theme, setTheme] = useState('default');
+  const divThemeRef = useRef(null);
+
+  const [pexelsImageQuery, setPexelsImageQuery] = useState("");
+  const images = usePexelsAPI(pexelsImageQuery);
+
+  const handleKeyDown = async (event) => {
     if (event.key === 'Enter') {
+
       event.preventDefault();
+      let clipboardText;
+
+      try {
+        clipboardText = await navigator.clipboard.readText();
+      } catch (error) {
+        console.error(error);
+      }
 
       //calculate the length of the firstWord
       let matchFirstWord = searchValue.match(/^[-.=\/,\w]+/);
-      let firstWord = matchFirstWord ? matchFirstWord[0] : "";
+      let firstWord = matchFirstWord ? matchFirstWord[0] : '';
       let nameLength = firstWord.length + 1;
 
       // check if searchValue only contains spaces
       if (/^\s*$/.test(searchValue)) {
-      } else if (searchValue.startsWith('-')) {
-        // match the first word if the first word id "-yt" then return true else return false
-        if (firstWord === '-yt') {
-          // searchValue.slice(4) slices the "-yt " from the beginning of the string
+
+        openLink(defaultUrl, clipboardText, isNewTab);
+
+      } else if (searchValue.startsWith('-') || searchValue.startsWith('/')) {
+        const allNameCommands = [...defaultLinks, ...defaultShortcuts];
+
+        // Create an array of command names
+        const allNamesNow = allNameCommands.map((item) => item.name);
+
+        const matchingCommand = allNameCommands.find(
+          (command) => command.name === firstWord
+        );
+
+        if (allNamesNow.includes(firstWord) && searchValue.startsWith('-')) {
+
+          if (!(searchValue.slice(nameLength)).replace(/&nbsp;/g, '').trim()) {
+            // The searchValue string contains only whitespace or &nbsp; or is empty
+            openLink(
+              matchingCommand.url,
+              clipboardText,
+              isNewTab
+            );
+          } else {
+            openLink(
+              matchingCommand.url,
+              searchValue.slice(nameLength),
+              isNewTab
+            );
+          }
+
+          // if (searchValue.startsWith('-img')) {
+          //   setPexelsImageQuery(searchValue.slice(nameLength))
+          //   return (
+          //     <div>
+          //       {images && images.length > 0 && images.map((image) => (
+          //         <img src={image.src.medium} key={image.id} alt={image.url} />
+          //       ))}
+          //     </div>
+          //   );
+          // }
+
+          setSearchValue(searchValue.split(" ")[0].substring(0, nameLength));
+
+        } else if (searchValue.startsWith('-all')) {
+
+          let allURLs = ['google', 'yt', 'bing'];
+
+          const multiURLs = defaultShortcuts
+            .filter(shortcut => allURLs.includes(shortcut.name.substring(1))) // filter for the desired shortcuts
+            .map(shortcut => shortcut.url); // map the remaining objects to their 'url' values
+
+          for (let i = 0; i < multiURLs.length; i++) {
+            window.open(`${multiURLs[i]}${searchValue.slice(nameLength)}`, '_blank');
+          }
+
+          setSearchValue('-all ');
+
+        } else if ((allNamesNow.includes(firstWord)) && searchValue.startsWith('/')) {
+
           openLink(
-            'https://www.youtube.com/results?search_query=',
-            searchValue.slice(nameLength),
+            matchingCommand.url, '',
             isNewTab
           );
+
+        } else if (searchValue.startsWith('/')) {
+
+          openLink('http://' + searchValue.replace(/^\/+/, ''), '', isNewTab);
+
         }
-      } else if (searchValue.startsWith('/')) {
       } else if (searchValue.startsWith('=')) {
+
         // if the searchValue starts with =mini, then toggle mini
         if (searchValue.startsWith('=mini')) {
+
           handleToggleMini();
+          setSearchValue('');
+
+        } else if (searchValue.startsWith('=newtab')) {
+
+          setIsNewTab(!isNewTab);
+          setSearchValue('');
+
+        } else if (searchValue.startsWith('=pin')) {
+
+          chrome.runtime.sendMessage(
+            { message: 'pinTab' },
+            function (response) {
+              console.log(response);
+            }
+          );
+          setSearchValue('');
+
+        } else if (searchValue.startsWith('=theme')) {
+
+          setTheme(searchValue.slice(nameLength))
+          setSearchValue('');
+
         }
+
       } else if (searchValue.startsWith('.')) {
+
         sendMessage(searchValue.replace(/&nbsp;/g, ' '));
+
       } else {
+
+        openLink(defaultUrl, searchValue.slice(0), isNewTab);
+
       }
     }
-  };
-
-  const handleCheckboxChange = (event) => {
-    setIsNewTab(event.target.checked);
   };
 
   const handleInputScroll = () => {
@@ -149,9 +323,45 @@ const SearchBar = () => {
     handleInputScroll();
   };
 
-  const searchTerms = {
-    start: ['-yt', '/yt', '=mini'],
-    middle: ['apple', 'test'],
+  let browserNames;
+
+  try {
+    browserNames = JSON.parse(localStorage.getItem('browserNames')) || [];
+  } catch (error) {
+    browserNames = [];
+  }
+
+  chrome.runtime.sendMessage({ message: 'getBrowserData' }, function (response) {
+    if (response && response.data) {
+      let browserData = response.data;
+      localStorage.setItem('browserData', JSON.stringify(browserData));
+      browserNames = Object.keys(browserData).map(name => `.${name}`);
+      localStorage.setItem('browserNames', JSON.stringify(browserNames));
+    } else {
+      console.error('Error handling response:', chrome.runtime.lastError);
+      let browserData = JSON.parse(localStorage.getItem('browserData'));
+      if (browserData) {
+        browserNames = Object.keys(browserData).map(name => `.${name}`);
+        localStorage.setItem('browserNames', JSON.stringify(browserNames));
+      } else {
+        console.error('Failed to get browser data from message and local storage');
+      }
+    }
+  });
+
+  let searchTerms = {
+    start: [
+      '=mini',
+      '=newtab',
+      '=add',
+      '=remove',
+      '=note',
+      '=pin',
+      '=theme',
+      '-all',
+      ...allNames, ...browserNames
+    ],
+    middle: ['- NULL -'],
   };
 
   const isFirstMatch = (word, array) => {
@@ -165,14 +375,6 @@ const SearchBar = () => {
     return array.some((term) => new RegExp(`${term}`).test(word));
   };
 
-  chrome.runtime.sendMessage({ message: "getBrowserData" }, function(response) {
-    console.log(response);
-  });
-
-  let browserDataStr = localStorage.getItem("browserData");
-  let browserData = browserDataStr ? JSON.parse(browserDataStr) : null;
-  let browserNames = browserData ? Object.keys(browserData) : [];
-
   const renderHighlightedText = () => {
     const words = searchValue.split(/(?![/=+-.])(\W+)/);
     return (
@@ -182,12 +384,10 @@ const SearchBar = () => {
             key={index}
             className={
               isFirstMatch(word, searchTerms.start)
-                ? 'highlighted text-blue-600 dark:text-blue-500 transition-colors before:text-white duration-200 ease-in-out'
+                ? 'highlighted text-blue-600 dark:text-blue-500 transition-colors before:text-black dark:before:text-white duration-200 ease-in-out'
                 : isMatch(word, searchTerms.middle)
-                ? 'highlighted text-green-600 transition-colors before:text-white duration-200 ease-in-out'
-                : /^\.\w+$/.test(word) && browserNames.includes(word.slice(1))
-                ? 'highlighted text-yellow-600 transition-colors before:text-white duration-200 ease-in-out'
-                : 'transition-colors before:text-current duration-200 ease-in-out'
+                  ? 'highlighted text-green-600 transition-colors before:text-black dark:before:text-white duration-200 ease-in-out'
+                  : 'transition-colors before:text-current duration-200 ease-in-out'
             }
           >
             {word}
@@ -203,8 +403,27 @@ const SearchBar = () => {
     });
   };
 
+  useEffect(() => {
+    document.addEventListener('keydown', handleEscKey);
+    return () => {
+      document.removeEventListener('keydown', handleEscKey);
+    };
+  }, []);
+
+  const handleEscKey = (event) => {
+    if (event.key === 'Escape') {
+      setSearchValue('');
+    }
+  };
+
   return (
     <MotionConfig reducedMotion="user">
+
+      <Wallpaper
+        themeName={theme}
+        mode={useThemeContext(divThemeRef.current)}
+      />
+
       <motion.div
         variants={searchScaleVariants}
         initial={isMini ? 'mini' : 'full'}
@@ -215,6 +434,7 @@ const SearchBar = () => {
           ...smoothMotion,
         }}
       >
+
         <motion.div
           layout
           variants={searchTopVariants}
@@ -234,17 +454,18 @@ const SearchBar = () => {
               isMini
                 ? 'mini'
                 : 'full' && isMini
-                ? searchWidthVariants.mini.width
-                : searchWidthVariants.full.width
+                  ? searchWidthVariants.mini.width
+                  : searchWidthVariants.full.width
             }
             animate={isMini ? 'mini' : 'full'}
             transition={{
               type: 'spring',
-              opacity: { width: 0.3 },
+              duration: 2,
               restDelta: 0.001,
               ...smoothMotion,
             }}
           >
+
             <div className="w-full z-[98]">
               <input
                 id="inputContainer"
@@ -262,7 +483,7 @@ const SearchBar = () => {
                   height: '80px',
                   boxShadow: 'rgba(0, 0, 0, 0.25) 0px 25px 50px -12px',
                 }}
-                className="bg-[#333333] overflow-hidden input-container select-none focus:outline-none overflow-wrap p-5 text-[2.5rem]"
+                className="border-highlight border-[1px] border-black/40 dark:border-white/5 bg-white dark:bg-[#333333] overflow-hidden input-container select-none focus:outline-none overflow-wrap p-5 text-[2.5rem]"
                 spellCheck="false"
                 placeholder="Search or -query"
                 autoComplete="off"
@@ -273,14 +494,13 @@ const SearchBar = () => {
               />
               <div className="absolute top-0 left-0 w-screen flex justify-center pointer-events-none z-[99]">
                 <motion.div
-                  // className='px-5'
                   variants={searchWidthVariants}
                   initial={
                     isMini
                       ? 'mini'
                       : 'full' && isMini
-                      ? searchWidthVariants.mini.width
-                      : searchWidthVariants.full.width
+                        ? searchWidthVariants.mini.width
+                        : searchWidthVariants.full.width
                   }
                   animate={isMini ? 'mini' : 'full'}
                   transition={{
@@ -303,7 +523,7 @@ const SearchBar = () => {
                       scrollbarWidth: 'none',
                       whiteSpace: 'pre-wrap',
                     }}
-                    className="bg-transparent focus:outline-none select-none pointer-events-none px-5 py-[0.625rem] text-[2.5rem] font-default-light text-white"
+                    className="bg-transparent focus:outline-none select-none pointer-events-none px-5 py-[0.625rem] text-[2.5rem] font-default-light  text-black dark:text-white"
                     onScroll={handleHighlightScroll}
                     ref={highlightRef}
                   >
@@ -317,21 +537,6 @@ const SearchBar = () => {
           </motion.div>
         </motion.div>
       </motion.div>
-      {/* <button
-        className="z-[99] px-2 py-1 m-4 bg-blue-600/20 rounded-lg text-blue-400 font-xl"
-        onClick={handleToggleMini}
-      >
-        Toggle Mini
-      </button> */}
-      {/* <label>
-        <input
-          className="z-[99]"
-          type="checkbox"
-          checked={isNewTab}
-          onChange={handleCheckboxChange}
-        />
-        Open in new tab
-      </label> */}
     </MotionConfig>
   );
 };

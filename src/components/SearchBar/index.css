@@ -9,7 +9,7 @@
 
 #inputContainer {
     color: transparent;
-    caret-color: #fff; /* set the color of the cursor */
+    caret-color: #000; /* set the color of the cursor */
   }
   
   #inputContainer::placeholder {
@@ -17,6 +17,18 @@
   }
   
   #inputContainer::selection {
-    background-color: rgb(0, 0, 0, 0.2);
+    background-color: rgb(0, 0, 0, 0.1);
     color: transparent;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    #inputContainer {
+      color: transparent;
+      caret-color: #fff; /* set the color of the cursor */
+    }
+
+    #inputContainer::selection {
+      background-color: rgb(0, 0, 0, 0.2);
+      color: transparent;
+    }
   }

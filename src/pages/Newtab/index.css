@@ -1,36 +1,46 @@
 @font-face {
-    font-family: 'Light';
-    src: url("../../assets/PulpDisplay-light.woff2") format("woff2")
+  font-family: 'Light';
+  src: url('../../assets/PulpDisplay-light.woff2') format('woff2');
 }
 
 @font-face {
-    font-family: 'Regular';
-    src: url("../../assets/PulpDisplay-Regular.woff2") format("woff2")
+  font-family: 'Regular';
+  src: url('../../assets/PulpDisplay-Regular.woff2') format('woff2');
 }
 
 @font-face {
-    font-family: 'Medium';
-    src: url("../../assets/PulpDisplay-Medium.woff2") format("woff2")
+  font-family: 'Medium';
+  src: url('../../assets/PulpDisplay-Medium.woff2') format('woff2');
 }
-
 
 .font-default-light {
-    font-smooth: never;
-    font-size-adjust: 0.5;
-    text-rendering: optimizeLegibility;
-    font-family: 'Light', Arial, Helvetica, sans-serif;
+  font-size-adjust: 0.5;
+  text-rendering: optimizeLegibility;
+  font-family: 'Light', Arial, Helvetica, sans-serif;
 }
 
 .font-default-regular {
-    font-smooth: never;
-    font-size-adjust: 0.5;
-    text-rendering: optimizeLegibility;
-    font-family: 'Regular', Arial, Helvetica, sans-serif;
+  font-size-adjust: 0.5;
+  text-rendering: optimizeLegibility;
+  font-family: 'Regular', Arial, Helvetica, sans-serif;
 }
 
 .font-default-medium {
-    font-smooth: never;
-    font-size-adjust: 0.5;
-    text-rendering: optimizeLegibility;
-    font-family: 'Medium', Arial, Helvetica, sans-serif;
+  font-size-adjust: 0.5;
+  text-rendering: optimizeLegibility;
+  font-family: 'Medium', Arial, Helvetica, sans-serif;
+}
+
+.border-highlight {
+  border-top-color: transparent;
+  border-left-color: transparent;
+  border-inline-end: none;
+  border-inline-start: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .border-highlight {
+    border-bottom: none;
+    border-right-color: transparent;
+  }
 }
