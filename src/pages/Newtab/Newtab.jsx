@@ -10,6 +10,8 @@ import useThemeContext from '../../hooks/useThemeContext';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import Wallpaper from '../../components/ui/Wallpaper';
 
+import { ClipboardProvider } from '../../context/globalContext';
+
 const LazyClipboard = lazy(() => import('../../components/Clipboard'));
 const LazySearchBar = lazy(() => import('../../components/SearchBar'));
 const LazyDock = lazy(() => import('../../components/Dock'));
@@ -32,6 +34,8 @@ const withDelay = (Component, delay) => {
 
 const Newtab = (props) => {
   const [theme, setTheme] = useState('default');
+  const [clipboardText, setClipboardText] = useState('');
+
   const divThemeRef = useRef(null);
 
   const { isSm, isMd, isLg, isXl, is2xl } = useMediaQuery();
@@ -78,8 +82,10 @@ const Newtab = (props) => {
           </svg>
         </div>
         <Suspense fallback={<div></div>}>
-          <DelayedClipboard />
-          <DelayedSearchBar />
+          <ClipboardProvider value={{ clipboardText, setClipboardText }}>
+            <DelayedClipboard />
+            <DelayedSearchBar />
+          </ClipboardProvider>
           <DelayedDock />
         </Suspense>
       </div>

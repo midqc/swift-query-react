@@ -1,10 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useContext } from 'react';
 import { useLocalStorage } from 'react-use';
 import './index.css';
 
 import { motion, MotionConfig, useAnimation } from 'framer-motion';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useMotionVariants } from '../../hooks/useMotionVariants';
+
+import { ClipboardContext } from '../../context/globalContext';
 
 import useThemeContext from '../../hooks/useThemeContext';
 import Wallpaper from '../../components/ui/Wallpaper';
@@ -167,6 +169,7 @@ const SearchBar = () => {
   };
 
   const [searchValue, setSearchValue] = useState('');
+  const { clipboardText } = useContext(ClipboardContext);
 
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [isInputHovered, setIsInputHovered] = useState(false);
@@ -258,13 +261,6 @@ const SearchBar = () => {
       }
 
       event.preventDefault();
-      let clipboardText;
-
-      try {
-        clipboardText = await navigator.clipboard.readText();
-      } catch (error) {
-        console.error(error);
-      }
 
       //calculate the length of the firstWord
       let matchFirstWord = searchValue.match(/^[-.=\/,\w]+/);
@@ -369,7 +365,7 @@ const SearchBar = () => {
 
           setTheme(searchValue.slice(nameLength))
           setSearchValue('');
-          
+
         } else if (searchValue.startsWith('=clear')) {
 
           handleClearHistory();
