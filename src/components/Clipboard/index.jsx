@@ -1,8 +1,11 @@
-import React, { useState, useEffect, createContext } from 'react';
+/* eslint-disable react/no-danger-with-children */
+import React, { useState, useEffect, createContext, useRef } from 'react';
 
 import { motion, MotionConfig, useAnimation } from 'framer-motion';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useMotionVariants } from '../../hooks/useMotionVariants';
+
+import { IFrameIcon } from '../Icons'
 
 export const ClipboardContext = createContext();
 
@@ -15,6 +18,18 @@ function Clipboard() {
     fastMotion,
     rubberyMotion,
   } = useMotionVariants();
+
+  const childControls = useAnimation();
+  const childRef = useRef(null);
+
+  const handleParentHoverStart = () => {
+    childControls.start("hover");
+  };
+
+  const handleParentHoverEnd = () => {
+    childControls.start("nothover");
+  };
+
 
   const [clipboardText, setClipboardText] = useState('');
   const [maxLength, setMaxLength] = useState(6);
@@ -66,20 +81,92 @@ function Clipboard() {
   }, []);
 
   function handleClick() {
-    console.log('Clipboard Clicked');
+  }
+
+  const [links, setLinks] = useState([]);
+
+  // Regular expression to match URLs
+  const urlRegex = /(?:(?:https?|ftp):\/\/)?[\w/\-?=%.]+\.[\w/\-?=%.]+/g;
+
+  // Function to filter links from text
+  const filterLinks = (text) => {
+    const matchedLinks = text.match(urlRegex) || [];
+    const separatedLinks = matchedLinks.map((link) =>
+      link.split(/[,\s]+/).filter(Boolean)
+    ).flat();
+    const uniqueLinks = Array.from(new Set(separatedLinks));
+    const sortedLinks = uniqueLinks
+      .map((link) => {
+        try {
+          return new URL(link).href;
+        } catch (error) {
+          console.error(`Invalid URL: ${link}`, error);
+          return null;
+        }
+      })
+      .filter(Boolean)
+      .sort((a, b) => {
+        const hostA = new URL(a).hostname;
+        const hostB = new URL(b).hostname;
+        if (hostA < hostB) return -1;
+        if (hostA > hostB) return 1;
+        return 0;
+      });
+    setLinks(sortedLinks);
+
+  };
+
+  const linkList = links.map((item) =>
+    <motion.li 
+    whileTap={{scale: 0.9}} 
+    transition={{type: 'spring',
+    restDelta: 0.001,
+      ...smoothMotion,
+    }} 
+    className='select-none text-ellipsis overflow-hidden max-w-[16rem] w-full h-fit whitespace-nowrap bg-blue-600/10 dark:bg-blue-600/10 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-lg flex'>
+      <span className='flex items-center space-x-2'>
+        <IFrameIcon   onClick={() => {
+    const iframe = document.createElement('iframe');
+    iframe.src = item;
+    document.body.appendChild(iframe);
+  }}
+ height='18px' className='fill-blue-600 dark:fill-blue-400' />
+        <a href={item} className='inline-block text-ellipsis cursor-pointer' style={{width: '13.5rem', overflow: 'hidden'}}>{item}</a>
+      </span>
+    </motion.li>
+  );
+
+  // Call filterLinks function on initial render and whenever text changes
+  useEffect(() => {
+    filterLinks(clipboardText);
+  }, [clipboardText]);
+
+  const count = links.length;
+  let countText;
+
+  if (count === 0) {
+    countText = '';
+  } else if (count === 1) {
+    countText = '1 Link';
+  } else {
+    countText = `${count} Links`;
   }
 
   return (
     <div className="flex absolute left-0 justify-center w-screen">
-       
+
       {clipboardText && (
-        <span className="cursor-pointer flex flex-row justify-center items-center">
+        <span className="flex flex-row justify-center items-center">
           <motion.span
-            className="relative w-fit flex border-highlight border-[1px] border-black/30 dark:border-white/5 bg-yellow-500/60 dark:bg-yellow-600/10 items-center focus:outline-none align-middle select-none px-4 rounded-full shadow-md text-base text-yellow-800 dark:text-yellow-600 backdrop-blur-sm"
+            onHoverStart={handleParentHoverStart}
+            onHoverEnd={handleParentHoverEnd}
+            className="relative z-[99] w-fit flex flex-col border-highlight border-[1px] overflow-hidden border-black/30 dark:border-white/5 shadow-sm bg-white/80 dark:bg-neutral-700/40  focus:outline-none align-middle items-center justify-center px-4 rounded-[0.6rem] text-base text-neutral-500 backdrop-blur-2xl"
             style={{ top: '3.8rem' }}
-            initial={{  scale: 1, translateY: '1rem' }}
-            animate={{ scale: 1, translateY: '0rem'  }}
-            whileTap={{ scale: 0.8 }}
+            initial={{ scale: 1, translateY: '1rem' }}
+            animate={{ scale: 1, translateY: '0rem' }}
+            whileHover={{
+              borderRadius: ['0.6rem', '1.4rem'],
+            }}
             transition={{
               type: 'spring',
               restDelta: 0.001,
@@ -87,45 +174,89 @@ function Clipboard() {
             }}
             onClick={handleClick}
           >
-            {(() => {
-              const textLength = clipboardText.trim().length;
-              if (textLength > maxLength) {
-                const diff = textLength - maxLength;
-                let trimmedText = clipboardText.trim();
-                let trimmedTextFront;
-                let trimmedTextEnd;
-                let ellipsis = '';
-                if (diff > 6) {
-                  trimmedTextFront = trimmedText.slice(0, maxLength);
-                  ellipsis = <span className="opacity-50">...</span>;
-                  trimmedTextEnd = trimmedText.slice(textLength - 3);
-                } else if (diff === 5) {
-                  trimmedTextFront = trimmedText.slice(0, maxLength);
-                  ellipsis = <span className="opacity-50">...</span>;
-                  trimmedTextEnd = trimmedText.slice(textLength - 2);
-                } else if (diff === 4) {
-                  trimmedTextFront = trimmedText.slice(0, maxLength);
-                  ellipsis = <span className="opacity-50">...</span>;
-                  trimmedTextEnd = trimmedText.slice(textLength - 1);
+            <motion.div
+              ref={childRef}
+              variants={{
+                hover: { opacity: 0, translateY: '-24px' },
+                nothover: { opacity: 1, translateY: '0px' }
+              }}
+              initial="nothover"
+              animate={childControls}
+              className='flex flex-nowrap shrink-0 flex-row select-none'>
+              <span className='text-neutral-600 dark:text-neutral-400'>Copied: &#8205;</span>
+              {(() => {
+                const textLength = clipboardText.trim().length;
+                if (textLength > maxLength) {
+                  const diff = textLength - maxLength;
+                  let trimmedText = clipboardText.trim();
+                  let trimmedTextFront;
+                  let trimmedTextEnd;
+                  let ellipsis = '';
+                  if (diff >= 6) {
+                    trimmedTextFront = trimmedText.slice(0, maxLength);
+                    ellipsis = <span className="opacity-50">...</span>;
+                    trimmedTextEnd = trimmedText.slice(textLength - 3);
+                  } else if (diff === 5) {
+                    trimmedTextFront = trimmedText.slice(0, maxLength);
+                    ellipsis = <span className="opacity-50">...</span>;
+                    trimmedTextEnd = trimmedText.slice(textLength - 2);
+                  } else if (diff === 4) {
+                    trimmedTextFront = trimmedText.slice(0, maxLength);
+                    ellipsis = <span className="opacity-50">...</span>;
+                    trimmedTextEnd = trimmedText.slice(textLength - 1);
+                  } else {
+                    trimmedTextFront = trimmedText.slice(0, maxLength);
+                    ellipsis = <span className="opacity-50">...</span>;
+                    trimmedTextEnd = '';
+                  }
+                  return (
+                    <>
+                      {trimmedTextFront}
+                      {ellipsis}
+                      {trimmedTextEnd}
+                    </>
+                  );
                 } else {
-                  trimmedTextFront = trimmedText.slice(0, maxLength);
-                  ellipsis = <span className="opacity-50">...</span>;
-                  trimmedTextEnd = '';
+                  return clipboardText.trim();
                 }
-                return (
-                  <>
-                    {trimmedTextFront}
-                    {ellipsis}
-                    {trimmedTextEnd}
-                  </>
-                );
-              } else {
-                return clipboardText.trim();
-              }
-            })()}
+              })()}
+
+              <span className='text-blue-600 dark:text-blue-500'>
+                &#8205; &#8205;{countText}
+              </span>
+            </motion.div>
+
+            <motion.div
+              ref={childRef}
+              variants={{
+                hover: {
+                  opacity: 1, translateY: '-24px', height: 'auto',
+                  transition: {
+                    type: 'spring',
+                    restDelta: 0.001,
+                    ...smoothMotion,
+                  }
+                },
+                nothover: {
+                  opacity: 0, translateY: '0px', height: 0,
+                  transition: {
+                    type: 'spring',
+                    restDelta: 0.001,
+                    ...smoothMotion,
+                  }
+                }
+              }}
+              initial="nothover"
+              animate={childControls}>
+              <ul className='space-y-2 mt-4 select-text mb-[-7px]'>
+                <li className='bg-black/5 dark:bg-white/5 rounded-lg p-2 max-w-[16rem] max-h-32 overflow-y-scroll shadow-sm'><pre id='clipboard-content' className='font-default-regular outline-none whitespace-pre-wrap break-words overflow-wrap-break-word' contentEditable>{clipboardText}</pre></li>
+                {linkList}
+              </ul>
+            </motion.div>
           </motion.span>
         </span>
       )}
+
     </div>
   );
 }

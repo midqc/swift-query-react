@@ -41,10 +41,10 @@
   "commands": {
     "live-results": {
       "suggested_key": {
-        "default": "Ctrl+Space",
-        "mac": "Command+Space"
+        "default": "Ctrl+Enter",
+        "mac": "Command+Enter"
       },
-      "description": "fetch live search results"
+      "description": "Live Search Results"
     }
   }
 }

@@ -3,6 +3,8 @@ import "./Wallpaper.module.css"
 
 const defaultBgLight = "default-light.svg";
 const defaultBgDark = "default-dark.svg";
+// const defaultBgLight = "file:///C:/Users/HP/OneDrive/Desktop/blurred.jpg";
+// const defaultBgDark = "file:///C:/Users/HP/OneDrive/Desktop/blurred.jpg";
 
 const hackerBgLight ="hacker-light.svg";
 const hackerBgDark = "hacker-dark.svg";

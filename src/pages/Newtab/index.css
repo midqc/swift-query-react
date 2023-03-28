@@ -44,3 +44,25 @@
     border-right-color: transparent;
   }
 }
+
+/* Set the width and height of the scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+  resize: none; /* add this line to remove the white square */
+}
+
+/* Set the background color of the scrollbar track */
+::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+/* Set the color and rounded corners of the scrollbar thumb */
+::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  -ms-border-radius: 2px;
+  -o-border-radius: 2px;
+}

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useMotionVariants } from '../../hooks/useMotionVariants';
 import Tooltip from '../Tooltip';
 
-import { NotesIcon, TipsIcon, SettingsIcon, ClipboardIcon, VideoIcon, PluginsIcon, MoreAppsIcon } from '../Icons';
+import { NotesIcon, TipsIcon, OptionsIcon, ClipboardIcon, VideoIcon, PluginsIcon, MoreAppsIcon } from '../Icons';
 
 const iconDefaultClass = 'dark:fill-white/60 fill-black/80'
 
@@ -18,9 +18,8 @@ const DockIconContainer = (props) => {
     } = useMotionVariants();
 
     return (
-        <motion.div
+         <motion.div
             whileTap={{ scale: 0.9, zIndex: 9999 }}
-            drag
             dragConstraints={{ top: 0, right: 0, bottom: 0, left: 0 }}
             dragTransition={{ bounceStiffness: 200, bounceDamping: 20 }}
             dragElastic={0.5}
@@ -34,6 +33,7 @@ const DockIconContainer = (props) => {
         >
             {props.children}
         </motion.div>
+       
     )
 }
 
@@ -79,7 +79,7 @@ const GroupLayout = (props) => {
 
 const DockSeparator = (props) => {
     return (
-        <div id='dock-separator' className='h-[62px] w-[0.25rem] shrink-0 dark:bg-white/[0.03] bg-black/10 rounded-full z-50'></div>
+        <div id='dock-separator' className='h-[62px] w-[2px] shrink-0 dark:bg-white/[0.03] bg-black/10 rounded-full z-50'></div>
     )
 }
 
@@ -93,47 +93,48 @@ const Dock = () => {
         rubberyMotion,
     } = useMotionVariants();
 
-    const extensionId = chrome.runtime.id;
-
-    function openOptionsPage() {
-        chrome.runtime.openOptionsPage();
-    }
-
     return (
         <div className='flex w-screen z-40 h-fit justify-center items-center absolute bottom-[64px]'>
             <motion.div
-                initial={{ scale: 1.1 }}
+                initial={{ scale: 1.2 }}
                 animate={{ scale: 1 }}
                 transition={{
                     type: 'spring',
                     restDelta: 0.001,
                     ...smoothMotion,
                 }}
-                id='dock-container' className='flex flex-row h-24 items-center justify-center border-highlight border-[1px] border-black/30 dark:border-white/5 space-x-4 p-4 backdrop-blur-xl rounded-[2.3rem] shadow-xl bg-white/60 dark:bg-white/[0.03]'>
+                id='dock-container' className='flex flex-row h-24 items-center justify-center border-highlight border-[1px] border-black/30 dark:border-white/5 space-x-4 p-4 backdrop-blur-xl rounded-[2.3rem] shadow-lg bg-neutral-100/60 dark:bg-neutral-800/80'>
 
-                <DockIconContainer ><NotesIcon className={iconDefaultClass} /></DockIconContainer>
+                <Tooltip
+                    tooltipContent={() => (
+                        <>
+                            <span>Notes</span>
+                        </>
+                    )}
+                >
+                    <DockIconContainer ><NotesIcon className={iconDefaultClass} /></DockIconContainer>
+                </Tooltip>
 
-                <GroupLayout>
+                {/* <GroupLayout>
                     <DockIconContainer><VideoIcon className={iconDefaultClass} /></DockIconContainer>
                     <DockIconContainer><TipsIcon className={iconDefaultClass} /></DockIconContainer>
                     <DockIconContainer><ClipboardIcon className={iconDefaultClass} /></DockIconContainer>
                     <DockIconContainer><ClipboardIcon className={iconDefaultClass} /></DockIconContainer>
-                </GroupLayout>
+                </GroupLayout> */}
 
                 <DockSeparator />
 
-                    <Tooltip
-                        tooltipContent={() => (
-                            <>
-                                <h3>Settings</h3>
-                            </>
-                        )}
-                    >
-                        <div onClick={openOptionsPage}>
-                            <DockIconContainer><SettingsIcon className={iconDefaultClass} /></DockIconContainer>
-                        </div>
-                    </Tooltip>
-                    <Tooltip
+                <Tooltip
+                    tooltipContent={() => (
+                        <>
+                            <span>Options</span>
+                        </>
+                    )}
+                >
+                        <DockIconContainer><OptionsIcon className={iconDefaultClass} /></DockIconContainer>
+                </Tooltip>
+
+                {/* <Tooltip
                         tooltipContent={() => (
                             <>
                                 <h3 className='whitespace-nowrap'>Plugins</h3>
@@ -141,7 +142,8 @@ const Dock = () => {
                         )}
                     >
                         <DockIconContainer><PluginsIcon className={iconDefaultClass} /></DockIconContainer>
-                    </Tooltip>
+                    </Tooltip> */}
+
             </motion.div>
         </div>
     )

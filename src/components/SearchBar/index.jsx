@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useLocalStorage } from 'react-use';
 import './index.css';
 
-import { motion, MotionConfig } from 'framer-motion';
+import { motion, MotionConfig, useAnimation } from 'framer-motion';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useMotionVariants } from '../../hooks/useMotionVariants';
 
@@ -12,6 +12,8 @@ import Wallpaper from '../../components/ui/Wallpaper';
 import usePexelsAPI from '../../hooks/api/usePexelsAPI';
 
 let ccTLDs = [".com", ".org", ".net", ".edu", ".gov", ".co", ".io", ".info", ".biz", ".me", ".tv", ".us", ".ca", ".uk", ".au", ".mx", ".de", ".fr", ".es", ".it", ".nl", ".se", ".no", ".dk", ".ru", ".jp", ".cn", ".nz", ".za", ".in", ".ae"];
+
+const SEARCH_HISTORY_KEY = 'searchHistory';
 
 let defaultShortcuts = [
   { name: '-google', url: 'https://www.google.com/search?q=', info: 'search' },
@@ -72,6 +74,21 @@ const defaultLinks = [
 ];
 
 const SearchBar = () => {
+
+  const controls = useAnimation();
+
+  const jelloKeyframes = {
+    '0%': { skewX: '0deg', skewY: '0deg' },
+    '12.5%': { skewX: '-12.5deg', skewY: '-12.5deg' },
+    '25%': { skewX: '6.25deg', skewY: '6.25deg' },
+    '37.5%': { skewX: '-3.125deg', skewY: '-3.125deg' },
+    '50%': { skewX: '1.5625deg', skewY: '1.5625deg' },
+    '62.5%': { skewX: '-0.78125deg', skewY: '-0.78125deg' },
+    '75%': { skewX: '0.390625deg', skewY: '0.390625deg' },
+    '87.5%': { skewX: '-0.1953125deg', skewY: '-0.1953125deg' },
+    '100%': { skewX: '0deg', skewY: '0deg' },
+  };
+
   const [links, setLinks] = useLocalStorage('links', defaultLinks);
   const [shortcuts, setShortcuts] = useLocalStorage(
     'shortcuts',
@@ -150,12 +167,72 @@ const SearchBar = () => {
   };
 
   const [searchValue, setSearchValue] = useState('');
+
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [isInputHovered, setIsInputHovered] = useState(false);
-  const [isNewTab, setIsNewTab] = useState(true);
+
+  const [isNewTab, setIsNewTab] = useState(() => {
+    const savedIsNewTab = localStorage.getItem('isNewTab');
+    return savedIsNewTab ? JSON.parse(savedIsNewTab) : true;
+  });
+
+  const toggleIsNewTab = () => {
+    const newIsNewTab = !Boolean(isNewTab);
+    setIsNewTab(newIsNewTab);
+    localStorage.setItem('isNewTab', JSON.stringify(newIsNewTab));
+  };
 
   const inputRef = useRef(null);
   const highlightRef = useRef(null);
+
+  const [searchHistory, setSearchHistory] = useState([]);
+
+  useEffect(() => {
+    // Load search history from local storage
+    const storedHistory = localStorage.getItem(SEARCH_HISTORY_KEY);
+    if (storedHistory) {
+      setSearchHistory(JSON.parse(storedHistory));
+    }
+  }, []);
+
+  useEffect(() => {
+    // Save search history to local storage
+    localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(searchHistory));
+  }, [searchHistory]);
+
+  const handleSearchHistoryChange = (newValue) => {
+    setSearchValue(newValue);
+
+    if (newValue === '') {
+      inputRef.current.focus();
+      return;
+    }
+
+    const newHistory = [newValue, ...searchHistory.filter(value => value !== newValue)];
+    setSearchHistory(newHistory);
+  };
+
+  const handleInputKeyDown = (event) => {
+    const key = event.key;
+    if (key === 'ArrowUp' || key === 'ArrowDown') {
+      event.preventDefault();
+      const currentIndex = searchHistory.indexOf(searchValue);
+      const nextIndex = key === 'ArrowUp' ? currentIndex + 1 : currentIndex - 1;
+      if (nextIndex >= 0 && nextIndex < searchHistory.length) {
+        const nextValue = searchHistory[nextIndex];
+        setSearchValue(nextValue);
+      } else if (nextIndex === -1) {
+        setSearchValue('');
+      } else if (nextIndex === currentIndex - 1 && searchHistory.length > 0) {
+        setSearchValue('=clear');
+      }
+    }
+  };
+
+
+  const handleClearHistory = () => {
+    setSearchHistory([]);
+  };
 
   const openLink = (url, searchValue, isNewTab) => {
     if (isNewTab) {
@@ -174,7 +251,11 @@ const SearchBar = () => {
   const images = usePexelsAPI(pexelsImageQuery);
 
   const handleKeyDown = async (event) => {
-    if (event.key === 'Enter') {
+    if (event.key === 'Enter' && !event.ctrlKey) {
+
+      if (searchValue) {
+        handleSearchHistoryChange(searchValue);
+      }
 
       event.preventDefault();
       let clipboardText;
@@ -271,7 +352,7 @@ const SearchBar = () => {
 
         } else if (searchValue.startsWith('=newtab')) {
 
-          setIsNewTab(!isNewTab);
+          toggleIsNewTab();
           setSearchValue('');
 
         } else if (searchValue.startsWith('=pin')) {
@@ -288,6 +369,11 @@ const SearchBar = () => {
 
           setTheme(searchValue.slice(nameLength))
           setSearchValue('');
+          
+        } else if (searchValue.startsWith('=clear')) {
+
+          handleClearHistory();
+          setSearchValue('');
 
         }
 
@@ -301,6 +387,20 @@ const SearchBar = () => {
 
       }
     }
+
+    if (event.ctrlKey && event.key === 'Enter') {
+      event.preventDefault();
+
+      if (searchValue) {
+        handleSearchHistoryChange(searchValue);
+      }
+
+    }
+  };
+
+  const handleKeyDowns = (event) => {
+    handleKeyDown(event);
+    handleInputKeyDown(event);
   };
 
   const handleInputScroll = () => {
@@ -356,8 +456,10 @@ const SearchBar = () => {
       '=add',
       '=remove',
       '=note',
+      '=clear',
       '=pin',
       '=theme',
+      '=default',
       '-all',
       ...allNames, ...browserNames
     ],
@@ -419,11 +521,6 @@ const SearchBar = () => {
   return (
     <MotionConfig reducedMotion="user">
 
-      <Wallpaper
-        themeName={theme}
-        mode={useThemeContext(divThemeRef.current)}
-      />
-
       <motion.div
         variants={searchScaleVariants}
         initial={isMini ? 'mini' : 'full'}
@@ -473,7 +570,7 @@ const SearchBar = () => {
                 onBlur={() => setIsInputFocused(false)}
                 onMouseOver={() => setIsInputHovered(true)}
                 onMouseOut={() => setIsInputHovered(false)}
-                onKeyDown={handleKeyDown}
+                onKeyDown={handleKeyDowns}
                 style={{
                   position: 'relative',
                   top: '-1px',
