@@ -2,12 +2,13 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 
 import { ClipboardContext } from '../../context/globalContext';
+import './index.css'
 
 import { delay, motion, MotionConfig, useAnimation } from 'framer-motion';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useMotionVariants } from '../../hooks/useMotionVariants';
 
-import { IFrameIcon } from '../Icons'
+import { GlobeIcon, TrashIcon, VideoIcon } from '../Icons'
 
 function Clipboard() {
   const {
@@ -124,42 +125,140 @@ function Clipboard() {
 
   };
 
-  const linkList = links.map((item) =>
-    <motion.li
-      whileTap={{ scale: 0.9 }}
-      transition={{
-        type: 'spring',
-        restDelta: 0.001,
-        ...smoothMotion,
-      }}
-      className='select-none text-ellipsis overflow-hidden max-w-[16rem] w-full h-fit whitespace-nowrap bg-blue-600/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-500 px-2 py-1 rounded-lg flex'>
-      <span className='flex items-center space-x-2'>
-        <IFrameIcon height='16px' className='fill-blue-600 dark:fill-blue-500' />
-        <a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '13.5rem', overflow: 'hidden' }}>{item}</a>
-      </span>
-    </motion.li>
-  );
+  const [titles, setTitles] = useState({});
+  // const youtubeApiKey = 'AIzaSyDgFa2LO6IVENx50Xi-mxc07THnEe-vFmI';
+  const youtubeApiKey = '';
+
+  useEffect(() => {
+    links.forEach(url => {
+      const videoId = url.split('v=')[1];
+
+      fetch(`https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=${youtubeApiKey}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.items && data.items.length > 0) {
+            setTitles(titles => ({ ...titles, [url]: data.items[0].snippet.title }))
+          }
+        })
+        .catch(error => console.error(error));
+    });
+  }, [links, youtubeApiKey]);
+
+  function trimSimilar(url1, url2) {
+    if (!url1 || !url2) {
+      return url1 || url2 || '';
+    }
+  
+    const url1Parts = url1.split('/');
+    const url2Parts = url2.split('/');
+    
+    // Find the index where the two URLs differ
+    let diffIndex = 0;
+    while (url1Parts[diffIndex] === url2Parts[diffIndex]) {
+      diffIndex++;
+      if (diffIndex === url1Parts.length || diffIndex === url2Parts.length) {
+        break;
+      }
+    }
+    
+    // If the URLs have the same domain name, return the remaining path of url2
+    if (url1Parts[2] === url2Parts[2]) {
+      return '➜/' + url2Parts.slice(diffIndex).join('/');
+    }
+    
+    // If the URLs have different domain names, return url2
+    return url2;
+  }  
+
+  const linkCount = links.length;
+
+  const linkList = links.map((item, index) => {
+    if (item.includes('youtube.com/watch')) {
+      return (
+        <motion.li
+          whileTap={{ scale: 0.9 }}
+          transition={{
+            type: 'spring',
+            restDelta: 0.001,
+            ...smoothMotion,
+          }}
+          className='select-none text-ellipsis overflow-hidden max-w-[16rem] w-full h-fit whitespace-nowrap bg-red-600/10 dark:bg-red-400/10 text-red-600 dark:text-red-500 px-2 py-1 rounded-lg flex'
+          key={index}
+        >
+          <span className='flex items-center space-x-2'>
+            {linkCount <= 3 ? <VideoIcon height='16px' className='fill-red-600 dark:fill-red-500' /> : ''}
+            {Object.keys(titles).length && titles[item]
+              ? linkCount > 3
+                ? (
+                  <a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '15.5rem', overflow: 'hidden' }}>
+                    {index + 1 + '. '}{titles[item]}
+                  </a>
+                ) : (
+                  <a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '13rem', overflow: 'hidden' }}>
+                    {titles[item]}
+                  </a>
+                )
+              : linkCount > 3
+                ? (
+                  <a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '15.5rem', overflow: 'hidden' }}>
+                    {index + 1 + '. '}{`YouTube/${item.replace(/^https?:\/\/www.youtube.com\/watch\?v=/, '')}`}
+                  </a>
+                ) : (
+                  <a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '13rem', overflow: 'hidden' }}>
+                    {`YouTube/${item.replace(/^https?:\/\/www.youtube.com\/watch\?v=/, '')}`}
+                  </a>
+                )
+            }
+          </span>
+        </motion.li>
+      );
+    } else {
+      return (
+        <motion.li
+          whileTap={{ scale: 0.9 }}
+          transition={{
+            type: 'spring',
+            restDelta: 0.001,
+            ...smoothMotion,
+          }}
+          className='select-none text-ellipsis overflow-hidden max-w-[16rem] w-full h-fit whitespace-nowrap bg-blue-600/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-500 px-2 py-1 rounded-lg flex'
+          key={index}
+        >
+          <span className='flex items-center space-x-2'>
+            {linkCount <= 3 ? <GlobeIcon height='16px' className='fill-blue-600 dark:fill-blue-500' /> : ''}
+            {linkCount > 3
+              ? (<a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '15rem', overflow: 'hidden' }}>
+                {index + 1 + '. '}{trimSimilar(links[index - 1], item).replace(/^https?:\/\/www./, '').replace(/^https?:\/\//, '')}
+              </a>) : (<a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '13.5rem', overflow: 'hidden' }}>
+                {trimSimilar(links[index - 1], item).replace(/^https?:\/\/www./, '').replace(/^https?:\/\//, '')}
+              </a>)}
+          </span>
+        </motion.li>
+      );
+    }
+  });
 
   // Call filterLinks function on initial render and whenever text changes
   useEffect(() => {
     filterLinks(clipboardText);
   }, [clipboardText]);
 
-  const count = links.length;
   let countText;
 
-  if (count === 0) {
+  if (linkCount === 0) {
     countText = '';
-  } else if (count === 1) {
+  } else if (linkCount === 1) {
     countText = '1 Link';
   } else {
-    countText = `${count} Links`;
+    countText = `${linkCount} Links`;
   }
 
   const handleClipboardChange = (event) => {
     const innerText = event.target.innerText;
-    setClipboardText(innerText);
-    navigator.clipboard.writeText(innerText);
+    if (clipboardText !== innerText) {
+      setClipboardText(innerText);
+      navigator.clipboard.writeText(innerText);
+    }
   };
 
   return (
@@ -170,12 +269,14 @@ function Clipboard() {
           <motion.span
             onHoverStart={handleParentHoverStart}
             onHoverEnd={handleParentHoverEnd}
-            className="relative z-[99] w-fit flex flex-col border-highlight border-[1px] overflow-hidden border-black/30 dark:border-white/5 shadow-md  bg-white/80 dark:bg-neutral-700/40  focus:outline-none align-middle items-center justify-center px-4 rounded-[0.6rem] text-base text-neutral-500 backdrop-blur-2xl"
+
+            className="relative w-fit flex flex-col border-highlight border-[1px] overflow-hidden border-black/20 dark:border-white/5 bg-white/80 dark:bg-[#333333CC]  focus:outline-none align-middle items-center justify-center px-4 rounded-[0.6rem] text-base text-neutral-500 backdrop-blur-md shadow-lg"
             style={{ top: '3.8rem' }}
             initial={{ scale: 1, translateY: '1rem' }}
             animate={{ scale: 1, translateY: '0rem' }}
             whileHover={{
               borderRadius: ['0.6rem', '1.4rem'],
+              zIndex: 999,
             }}
             transition={{
               type: 'spring',
@@ -202,7 +303,11 @@ function Clipboard() {
                   let trimmedTextFront;
                   let trimmedTextEnd;
                   let ellipsis = '';
-                  if (diff >= 6) {
+                  if (diff >= 10) {
+                    trimmedTextFront = trimmedText.slice(0, maxLength);
+                    ellipsis = <span className="opacity-50">...</span>;
+                    trimmedTextEnd = trimmedText.slice(textLength - 10);
+                  } else if (diff >= 6 && diff < 10) {
                     trimmedTextFront = trimmedText.slice(0, maxLength);
                     ellipsis = <span className="opacity-50">...</span>;
                     trimmedTextEnd = trimmedText.slice(textLength - 3);
@@ -240,7 +345,7 @@ function Clipboard() {
               ref={childRef}
               variants={{
                 hover: {
-                  opacity: 1, translateY: '-24px', height: 'auto', width: 'auto',
+                  opacity: 1, translateY: '-24px', height: 'auto',
                   transition: {
                     type: 'spring',
                     restDelta: 0.001,
@@ -248,7 +353,7 @@ function Clipboard() {
                   }
                 },
                 nothover: {
-                  opacity: 0, translateY: '0px', height: 0, width: 0,
+                  opacity: 0, translateY: '0px', height: 0,
                   transition: {
                     type: 'spring',
                     restDelta: 0.001,
@@ -259,14 +364,26 @@ function Clipboard() {
               initial="nothover"
               animate={childControls}>
               <ul className='space-y-2 mt-4 select-text mb-[-7px]'>
-                <li className='bg-black/5 dark:bg-white/5 rounded-lg p-2 max-w-[16rem] max-h-32 overflow-y-scroll shadow-sm'><pre id='clipboard-content' className='font-default-regular outline-none whitespace-pre-wrap break-words overflow-wrap-break-word' contentEditable onMouseLeave={handleClipboardChange} onBlur={handleClipboardChange}>{clipboardText}</pre></li>
-                {linkList}
+                <li className='border-black/5 dark:border-white/5 border-2 px-2 py-2 rounded-lg min-w-[12rem] max-w-[16rem] max-h-32 overflow-y-scroll'><pre id='clipboardTextContainer' className='font-default-regular outline-none whitespace-pre-wrap break-words overflow-wrap-break-word' contentEditable suppressContentEditableWarning onMouseLeave={handleClipboardChange}>{clipboardText}</pre></li>
+
+                {/* <li className='w-full flex flex-row justify-center items-center' style={{ marginTop: '1rem' }}>
+                  <div className='space-x-2 flex flex-row'>
+                    <div className='border-black/5 dark:border-white/5 border-2 rounded-full flex justify-center items-center h-8 w-8'><GlobeIcon height='14px' className='fill-neutral-600 dark:fill-neutral-500' /></div>
+                    <div className='border-black/5 dark:border-white/5 border-2 rounded-full flex justify-center items-center h-8 w-8'><GlobeIcon height='14px' className='fill-neutral-600 dark:fill-neutral-500' /></div>
+                    <div className='border-black/5 dark:border-white/5 border-2 rounded-full flex justify-center items-center h-8 w-8'><TrashIcon height='14px' className='fill-neutral-600 dark:fill-neutral-500' /></div>
+                  </div></li> */}
+
+                {(linkCount > 0) && (
+                  <li className='text-neutral-600 dark:text-neutral-400'>Copied Links</li>
+                )}
+                {(linkCount > 0) && (
+                  <li className='max-h-28 space-y-2 overflow-y-scroll'>{linkList}</li>
+                )}
               </ul>
             </motion.div>
           </motion.span>
         </span>
       )}
-
     </div>
   );
 }

@@ -6,14 +6,15 @@ import { motion, MotionConfig, useAnimation } from 'framer-motion';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useMotionVariants } from '../../hooks/useMotionVariants';
 
+import RandomPosition from '../ui/RandomPosition';
+
 import { ClipboardContext } from '../../context/globalContext';
 
 import useThemeContext from '../../hooks/useThemeContext';
 import Wallpaper from '../../components/ui/Wallpaper';
 
-import usePexelsAPI from '../../hooks/api/usePexelsAPI';
-
-let ccTLDs = [".com", ".org", ".net", ".edu", ".gov", ".co", ".io", ".info", ".biz", ".me", ".tv", ".us", ".ca", ".uk", ".au", ".mx", ".de", ".fr", ".es", ".it", ".nl", ".se", ".no", ".dk", ".ru", ".jp", ".cn", ".nz", ".za", ".in", ".ae"];
+const TLDs = [".com", ".org", ".net", ".edu", ".gov", ".co", ".io", ".info", ".biz", ".me", ".tv", ".us", ".ca", ".uk", ".au", ".mx", ".de", ".fr", ".es", ".it", ".nl", ".se", ".no", ".dk", ".ru", ".jp", ".cn", ".nz", ".za", ".in", ".ae"];
+const protocols = ["http://", "https://", "ftp://", "ftps://", "sftp://", "ssh://", "smtp://", "telnet://", "file://", "gopher://", "ws://", "wss://", "irc://", "irc6://", "nntp://", "news://", "svn://", "git://", "mms://", "rtsp://", "rtmp://", "rtp://", "xmpp://", "udp://", "tcp://", "stun://", "stuns://", "turn://", "turns://", "magnet://", "bitcoin://", "ethereum://", "ripple://", "dogecoin://", "ipfs://", "dat://", "dat://", "ipns://", "dweb:/", "bzz:/", "dat://", "ipns://", "eth://", "ens://", "unstoppable://",];
 
 const SEARCH_HISTORY_KEY = 'searchHistory';
 
@@ -76,20 +77,6 @@ const defaultLinks = [
 ];
 
 const SearchBar = () => {
-
-  const controls = useAnimation();
-
-  const jelloKeyframes = {
-    '0%': { skewX: '0deg', skewY: '0deg' },
-    '12.5%': { skewX: '-12.5deg', skewY: '-12.5deg' },
-    '25%': { skewX: '6.25deg', skewY: '6.25deg' },
-    '37.5%': { skewX: '-3.125deg', skewY: '-3.125deg' },
-    '50%': { skewX: '1.5625deg', skewY: '1.5625deg' },
-    '62.5%': { skewX: '-0.78125deg', skewY: '-0.78125deg' },
-    '75%': { skewX: '0.390625deg', skewY: '0.390625deg' },
-    '87.5%': { skewX: '-0.1953125deg', skewY: '-0.1953125deg' },
-    '100%': { skewX: '0deg', skewY: '0deg' },
-  };
 
   const [links, setLinks] = useLocalStorage('links', defaultLinks);
   const [shortcuts, setShortcuts] = useLocalStorage(
@@ -250,10 +237,24 @@ const SearchBar = () => {
   const [theme, setTheme] = useState('default');
   const divThemeRef = useRef(null);
 
-  const [pexelsImageQuery, setPexelsImageQuery] = useState("");
-  const images = usePexelsAPI(pexelsImageQuery);
+  const [liveResults, setLiveResults] = useState([]);
 
   const handleKeyDown = async (event) => {
+
+    //calculate the length of the firstWord
+    let matchFirstWord = searchValue.match(/^[-.=\/,\w]+/);
+    let firstWord = matchFirstWord ? matchFirstWord[0] : '';
+    let nameLength = firstWord.length + 1;
+
+    const allNameCommands = [...defaultLinks, ...defaultShortcuts];
+
+    // Create an array of command names
+    const allNamesNow = allNameCommands.map((item) => item.name);
+
+    const matchingCommand = allNameCommands.find(
+      (command) => command.name === firstWord
+    );
+
     if (event.key === 'Enter' && !event.ctrlKey) {
 
       if (searchValue) {
@@ -262,25 +263,12 @@ const SearchBar = () => {
 
       event.preventDefault();
 
-      //calculate the length of the firstWord
-      let matchFirstWord = searchValue.match(/^[-.=\/,\w]+/);
-      let firstWord = matchFirstWord ? matchFirstWord[0] : '';
-      let nameLength = firstWord.length + 1;
-
       // check if searchValue only contains spaces
       if (/^\s*$/.test(searchValue)) {
 
-        openLink(defaultUrl, clipboardText, isNewTab);
+        openLink(defaultUrl, encodeURIComponent(clipboardText.trim().replace(/&nbsp;/g, '')), isNewTab);
 
       } else if (searchValue.startsWith('-') || searchValue.startsWith('/')) {
-        const allNameCommands = [...defaultLinks, ...defaultShortcuts];
-
-        // Create an array of command names
-        const allNamesNow = allNameCommands.map((item) => item.name);
-
-        const matchingCommand = allNameCommands.find(
-          (command) => command.name === firstWord
-        );
 
         if (allNamesNow.includes(firstWord) && searchValue.startsWith('-')) {
 
@@ -288,7 +276,7 @@ const SearchBar = () => {
             // The searchValue string contains only whitespace or &nbsp; or is empty
             openLink(
               matchingCommand.url,
-              clipboardText,
+              encodeURIComponent(clipboardText.trim().replace(/&nbsp;/g, '')),
               isNewTab
             );
           } else {
@@ -298,17 +286,6 @@ const SearchBar = () => {
               isNewTab
             );
           }
-
-          // if (searchValue.startsWith('-img')) {
-          //   setPexelsImageQuery(searchValue.slice(nameLength))
-          //   return (
-          //     <div>
-          //       {images && images.length > 0 && images.map((image) => (
-          //         <img src={image.src.medium} key={image.id} alt={image.url} />
-          //       ))}
-          //     </div>
-          //   );
-          // }
 
           setSearchValue(searchValue.split(" ")[0].substring(0, nameLength));
 
@@ -334,10 +311,20 @@ const SearchBar = () => {
           );
 
         } else if (searchValue.startsWith('/')) {
-
-          openLink('http://' + searchValue.replace(/^\/+/, ''), '', isNewTab);
-
+          if (/:\/\//.test(searchValue)) {
+            openLink('' + searchValue.replace(/^\/+/, ''), '', isNewTab);
+          } else {
+            openLink('http://' + searchValue.replace(/^\/+/, ''), '', isNewTab);
+          }
         }
+      } else if (protocols.some(protocol => searchValue.startsWith(protocol))) {
+
+        openLink('' + searchValue.replace(/^\/+/, ''), '', isNewTab);
+
+      } else if (/^(https?:\/\/)?(([a-zA-Z0-9_-]+\.)*([a-zA-Z0-9_-]+\.[a-zA-Z]{2,9})|localhost|(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))(:(\d{1,5}))?(\/[a-zA-Z0-9_\/-]*)*$/.test(searchValue)) {
+
+        openLink('http://' + searchValue, '', isNewTab);
+
       } else if (searchValue.startsWith('=')) {
 
         // if the searchValue starts with =mini, then toggle mini
@@ -381,6 +368,7 @@ const SearchBar = () => {
 
         openLink(defaultUrl, searchValue.slice(0), isNewTab);
 
+        setSearchValue('');
       }
     }
 
@@ -391,6 +379,79 @@ const SearchBar = () => {
         handleSearchHistoryChange(searchValue);
       }
 
+      if ((allNamesNow.includes(firstWord)) && searchValue.startsWith('-')) {
+        if (searchValue.startsWith('-yt')) {
+          setLiveResults(
+            <div style={{ position: 'relative', height: '100vh', pointerEvents: 'none' }}>
+              <RandomPosition>
+                {[...Array(4)].map((_, i) => (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1, transition: { delay: i * 50 / 1000, type: 'spring', restDelta: 0.001, ...smoothMotion } }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                  >
+                    <motion.div
+                      key={i}
+                      style={{ pointerEvents: 'auto' }}
+                      drag
+                      className='border-highlight border-[1px] outline-none border-black/20 dark:border-white/5 bg-neutral-100 dark:bg-neutral-800 rounded-3xl cursor-pointer shadow-lg h-52 w-48'
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion }}
+                    />
+                  </motion.div>
+                ))}
+              </RandomPosition>
+            </div>
+          )
+        } else if (searchValue.startsWith('-img')) {
+          setLiveResults(
+            <div style={{ position: 'relative', height: '100vh', pointerEvents: 'none' }}>
+              <RandomPosition>
+                {[...Array(4)].map((_, i) => (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1, transition: { delay: i * 50 / 1000, type: 'spring', restDelta: 0.001, ...smoothMotion } }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                  >
+                    <motion.div
+                      key={i}
+                      style={{ pointerEvents: 'auto' }}
+                      className='border-highlight border-[1px] outline-none border-black/20 dark:border-white/5 bg-neutral-100 dark:bg-neutral-800 rounded-3xl cursor-pointer shadow-lg h-52 w-48'
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion }}
+                    />
+                  </motion.div>
+                ))}
+              </RandomPosition>
+            </div>
+          )
+        } else if (searchValue.startsWith('-google') || searchValue.startsWith('-bing') || searchValue.startsWith('-duck')) {
+          setLiveResults(
+            <div style={{ position: 'relative', height: '100vh', pointerEvents: 'none' }}>
+              <RandomPosition>
+                {[...Array(4)].map((_, i) => (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1, transition: { delay: i * 50 / 1000, type: 'spring', restDelta: 0.001, ...smoothMotion } }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                  >
+                    <motion.div
+                      key={i}
+                      style={{ pointerEvents: 'auto' }}
+                      className='border-highlight border-[1px] outline-none border-black/20 dark:border-white/5 bg-neutral-100 dark:bg-neutral-800 rounded-3xl cursor-pointer shadow-lg h-52 w-48'
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion }}
+                    />
+                  </motion.div>
+                ))}
+              </RandomPosition>
+            </div>
+          )
+        }
+      }
     }
   };
 
@@ -495,6 +556,29 @@ const SearchBar = () => {
     );
   };
 
+  const renderSuggestionText = (nameArray, suggestions) => {
+    const words = suggestions.split(/(?![/=+-.])(\W+)/);
+    const firstName = nameArray[0];
+
+    return (
+      <div>
+        {words.map((word, index) => (
+          <span
+            key={index}
+            className={
+              firstName === word
+                ? 'highlighted text-blue-600/40 dark:text-blue-500/40 transition-colors before:text-black dark:before:text-white duration-200 ease-in-out'
+                : 'highlighted text-white/20 dark:text-black/10 transition-colors before:text-black dark:before:text-white duration-200 ease-in-out'
+            }
+            contentEditable={false}
+          >
+            {word}
+          </span>
+        ))}
+      </div>
+    );
+  };
+
   const sendMessage = (message) => {
     chrome.runtime.sendMessage({ message }, (response) => {
       console.log('Response:', response.message);
@@ -516,7 +600,6 @@ const SearchBar = () => {
 
   return (
     <MotionConfig reducedMotion="user">
-
       <motion.div
         variants={searchScaleVariants}
         initial={isMini ? 'mini' : 'full'}
@@ -576,7 +659,7 @@ const SearchBar = () => {
                   height: '80px',
                   boxShadow: 'rgba(0, 0, 0, 0.25) 0px 25px 50px -12px',
                 }}
-                className="border-highlight border-[1px] border-black/40 dark:border-white/5 bg-white dark:bg-[#333333] overflow-hidden input-container select-none focus:outline-none overflow-wrap p-5 text-[2.5rem]"
+                className="border-highlight border-[1px] border-black/30 dark:border-white/5 bg-white dark:bg-[#333333] overflow-hidden input-container select-none focus:outline-none overflow-wrap p-5 text-[2.5rem]"
                 spellCheck="false"
                 placeholder="Search or -query"
                 autoComplete="off"
@@ -630,6 +713,34 @@ const SearchBar = () => {
           </motion.div>
         </motion.div>
       </motion.div>
+      {liveResults}
+      {/* {<div style={{ position: 'relative', height: '100vh', pointerEvents: 'none' }}>
+        <RandomPosition>
+          {[...Array(4)].map((_, i) => (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1, transition: { delay: i * 50 / 1000, type: 'spring', restDelta: 0.001, ...smoothMotion } }}
+              exit={{ opacity: 0, scale: 0.8 }}
+            >
+              <motion.div
+                key={i}
+                style={{ pointerEvents: 'auto' }}
+                drag
+                className='border-highlight border-[1px] outline-none border-black/20 dark:border-white/5 bg-neutral-100 mb-2 dark:bg-neutral-800 rounded-3xl cursor-pointer shadow-lg w-48'
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion }}
+              >
+                <div className='w-full aspect-video bg-white/5 rounded-t-3xl animate-pulse'></div>
+                <div className='p-4 space-y-4'>
+                  <div className='w-full h-4 rounded-full bg-white/5 animate-pulse'></div>
+                  <div className='w-1/2 h-4 rounded-full bg-white/5 animate-pulse'></div>
+                </div>
+              </motion.div>
+            </motion.div>
+          ))}
+        </RandomPosition>
+      </div>} */}
     </MotionConfig>
   );
 };

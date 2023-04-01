@@ -37,14 +37,5 @@
       "resources": ["content.styles.css", "logo-128.png", "logo-34.png"],
       "matches": []
     }
-  ],
-  "commands": {
-    "live-results": {
-      "suggested_key": {
-        "default": "Ctrl+Enter",
-        "mac": "Command+Enter"
-      },
-      "description": "Live Search Results"
-    }
-  }
+  ]
 }

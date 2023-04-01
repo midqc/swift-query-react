@@ -47,8 +47,8 @@
 
 /* Set the width and height of the scrollbar */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 3px;
+  height: 3px;
   resize: none; /* add this line to remove the white square */
 }
 
@@ -59,7 +59,7 @@
 
 /* Set the color and rounded corners of the scrollbar thumb */
 ::-webkit-scrollbar-thumb {
-  background-color: #888;
+  background-color: rgb(136, 136, 136, 0.4);
   border-radius: 2px;
   -webkit-border-radius: 2px;
   -moz-border-radius: 2px;

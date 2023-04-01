@@ -94,7 +94,7 @@ const Dock = () => {
     } = useMotionVariants();
 
     return (
-        <div className='flex w-screen z-40 h-fit justify-center items-center absolute bottom-[64px]'>
+        <div className='flex w-screen z-40 h-fit justify-center items-center absolute bottom-[64px] ' style={{ pointerEvents: 'none' }}>
             <motion.div
                 initial={{ scale: 1.2 }}
                 animate={{ scale: 1 }}
@@ -103,7 +103,7 @@ const Dock = () => {
                     restDelta: 0.001,
                     ...smoothMotion,
                 }}
-                id='dock-container' className='flex flex-row h-24 items-center justify-center border-highlight border-[1px] border-black/30 dark:border-white/5 space-x-4 p-4 backdrop-blur-xl rounded-[2.3rem] shadow-lg bg-neutral-100/60 dark:bg-neutral-800/80'>
+                id='dock-container' className='flex flex-row h-24 items-center justify-center border-highlight border-[1px] border-black/20 dark:border-white/5 space-x-4 p-4 backdrop-blur-xl rounded-[2.3rem] shadow-lg bg-neutral-100/60 dark:bg-neutral-800/80' style={{ pointerEvents: 'auto' }}>
 
                 <Tooltip
                     tooltipContent={() => (

@@ -10,7 +10,10 @@ import useThemeContext from '../../hooks/useThemeContext';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import Wallpaper from '../../components/ui/Wallpaper';
 
+import { useMotionVariants } from '../../hooks/useMotionVariants';
+
 import { ClipboardProvider } from '../../context/globalContext';
+import RandomPosition from '../../components/ui/RandomPosition';
 
 const LazyClipboard = lazy(() => import('../../components/Clipboard'));
 const LazySearchBar = lazy(() => import('../../components/SearchBar'));
@@ -33,6 +36,15 @@ const withDelay = (Component, delay) => {
 };
 
 const Newtab = (props) => {
+  const {
+    springyMotion,
+    bouncyMotion,
+    slowMotion,
+    smoothMotion,
+    fastMotion,
+    rubberyMotion,
+  } = useMotionVariants();
+
   const [theme, setTheme] = useState('default');
   const [clipboardText, setClipboardText] = useState('');
 
@@ -41,9 +53,9 @@ const Newtab = (props) => {
   const { isSm, isMd, isLg, isXl, is2xl } = useMediaQuery();
 
 
-  const DelayedClipboard = withDelay(LazyClipboard, 1000);
+  const DelayedClipboard = withDelay(LazyClipboard, 600);
   const DelayedSearchBar = withDelay(LazySearchBar, 0);
-  const DelayedDock = withDelay(LazyDock, 1000);
+  const DelayedDock = withDelay(LazyDock, 300);
 
   return (
     <>
