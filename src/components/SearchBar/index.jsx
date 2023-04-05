@@ -156,7 +156,8 @@ const SearchBar = () => {
   };
 
   const [searchValue, setSearchValue] = useState('');
-  const { clipboardText } = useContext(ClipboardContext);
+
+  const { currentClipboardText, clipboardTextHistory, updateClipboardText, deleteClipboardTextHistory } = useContext(ClipboardContext);
 
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [isInputHovered, setIsInputHovered] = useState(false);
@@ -212,9 +213,9 @@ const SearchBar = () => {
         const nextValue = searchHistory[nextIndex];
         setSearchValue(nextValue);
       } else if (nextIndex === -1) {
-        setSearchValue('');
-      } else if (nextIndex === currentIndex - 1 && searchHistory.length > 0) {
         setSearchValue('=clear');
+      } else if (nextIndex === currentIndex - 1 && searchHistory.length > 0) {
+        setSearchValue('');
       }
     }
   };
@@ -266,7 +267,7 @@ const SearchBar = () => {
       // check if searchValue only contains spaces
       if (/^\s*$/.test(searchValue)) {
 
-        openLink(defaultUrl, encodeURIComponent(clipboardText.trim().replace(/&nbsp;/g, '')), isNewTab);
+        openLink(defaultUrl, encodeURIComponent(currentClipboardText.trim().replace(/&nbsp;/g, '')), isNewTab);
 
       } else if (searchValue.startsWith('-') || searchValue.startsWith('/')) {
 
@@ -276,7 +277,7 @@ const SearchBar = () => {
             // The searchValue string contains only whitespace or &nbsp; or is empty
             openLink(
               matchingCommand.url,
-              encodeURIComponent(clipboardText.trim().replace(/&nbsp;/g, '')),
+              encodeURIComponent(currentClipboardText.trim().replace(/&nbsp;/g, '')),
               isNewTab
             );
           } else {
@@ -657,9 +658,8 @@ const SearchBar = () => {
                   width: '100%',
                   borderRadius: '28px',
                   height: '80px',
-                  boxShadow: 'rgba(0, 0, 0, 0.25) 0px 25px 50px -12px',
                 }}
-                className="border-highlight border-[1px] border-black/30 dark:border-white/5 bg-white dark:bg-[#333333] overflow-hidden input-container select-none focus:outline-none overflow-wrap p-5 text-[2.5rem]"
+                className="border-highlight shadow-2xl border-[1px] border-black/30 dark:border-white/5 bg-white dark:bg-[#333333] overflow-hidden input-container select-none focus:outline-none overflow-wrap p-5 text-[2.5rem]"
                 spellCheck="false"
                 placeholder="Search or -query"
                 autoComplete="off"

@@ -9,10 +9,6 @@ export const ClipboardIcon = (props) => (
     width={props.width}
     height={props.height}
     viewBox="0 0 62 62"
-    style={{
-      overflow: "visible",
-      enableBackground: "new 0 0 62 62",
-    }}
     xmlSpace="preserve"
     {...props}
   >
@@ -101,14 +97,9 @@ export const AddIcon = (props) => (
     width={props.width}
     height={props.height}
     viewBox="0 0 68.6 68.6"
-    style={{
-      overflow: "visible",
-      enableBackground: "new 0 0 68.6 68.6",
-    }}
     xmlSpace="preserve"
     {...props}
   >
-    <style type="text/css">{"\n\t.st0{fill:#212121;}\n"}</style>
     <defs />
     <path
       fill={props.fill}
@@ -127,14 +118,9 @@ export const CrossIcon = (props) => (
     width={props.width}
     height={props.height}
     viewBox="0 0 50.4 50.4"
-    style={{
-      overflow: "visible",
-      enableBackground: "new 0 0 50.4 50.4",
-    }}
     xmlSpace="preserve"
     {...props}
   >
-    <style type="text/css">{"\n\t.st0{fill:#212121;}\n"}</style>
     <defs />
     <path
       fill={props.fill}
@@ -153,14 +139,9 @@ export const PinIcon = (props) => (
     width={props.width}
     height={props.height}
     viewBox="0 0 62 62"
-    style={{
-      overflow: "visible",
-      enableBackground: "new 0 0 62 62",
-    }}
     xmlSpace="preserve"
     {...props}
   >
-    <style type="text/css">{"\n\t.st0{fill:#212121;}\n"}</style>
     <defs />
     <g>
       <path
@@ -186,14 +167,9 @@ export const NotesIcon = (props) => (
     width={props.width}
     height={props.height}
     viewBox="0 0 63.1 62.7"
-    style={{
-      overflow: "visible",
-      enableBackground: "new 0 0 63.1 62.7",
-    }}
     xmlSpace="preserve"
     {...props}
   >
-    <style type="text/css">{"\n\t.st0{fill:#212121;}\n"}</style>
     <defs />
     <g>
       <path
@@ -309,7 +285,8 @@ export const IFrameIcon = (props) => (
         d="M53.5,0h-45C3.8,0,0,3.8,0,8.5v45C0,58.2,3.8,62,8.5,62h45c4.7,0,8.5-3.8,8.5-8.5v-45C62,3.8,58.2,0,53.5,0z  M58.6,53.5c0,2.8-2.3,5-5,5h-45c-2.8,0-5-2.3-5-5V18.6c0-1.9,1.6-3.5,3.5-3.5H55c1.9,0,3.5,1.6,3.5,3.5V53.5z"
       />
       <g>
-        <line fill={props.fill}
+        <line
+          fill={props.fill}
           className={props.className}
           x1={20.9} y1={47.2} x2={41.1} y2={27.1} />
         <path
@@ -353,23 +330,16 @@ export const TrashIcon = (props) => (
     y="0px"
     width={props.width}
     height={props.height}
-    viewBox="0 0 53.1 62"
+    viewBox="0 0 52 62"
     xmlSpace="preserve"
     {...props}
   >
     <defs />
-    <g>
-      <path
-        fill={props.fill}
-        className={props.className}
-        d="M50.7,9.3H2.5C1.1,9.3,0,8.2,0,6.9v0C0,3.1,3.1,0,6.9,0h39.4c3.8,0,6.9,3.1,6.9,6.9v0 C53.1,8.2,52,9.3,50.7,9.3z"
-      />
-      <path
-        fill={props.fill}
-        className={props.className}
-        d="M40.7,62H12.6c-3.2,0-6-2.4-6.4-5.6C4.3,42.9,2.3,29.4,0.4,15.9C0.2,14.4,1.3,13,2.9,13h47.4 c1.5,0,2.7,1.3,2.4,2.8c-1.9,13.5-3.8,27-5.7,40.6C46.6,59.6,43.9,62,40.7,62z"
-      />
-    </g>
+    <path
+      fill={props.fill}
+      className={props.className}
+      d="M50.1,4.5C45.4,0.9,33.6,0.2,28,0c-0.1,0-0.2,0-0.3,0c-0.2,0-0.4,0-0.6,0v0c0,0-0.4,0-1,0c-0.6,0-1,0-1,0v0 c-0.1,0-0.2,0-0.3,0c-0.2,0-0.4,0-0.7,0C18.4,0.2,6.5,0.9,1.9,4.5c-1.3,1-2,2.3-1.9,3.8C1,17,5.6,54.7,5.6,54.7 c0.2,0.9,0.7,2.7,2.1,4.1C7.9,58.9,7.9,58.9,8,59c0.4,0.3,1.4,1.2,4,2c1.7,0.5,3.8,0.9,10,1c0.8,0,1.7,0,2.7,0h2.6c1,0,1.9,0,2.7,0 c6.2-0.1,8.3-0.5,10-1c2.6-0.8,3.6-1.7,4-2c0.3-0.2,0.5-0.5,0.7-0.8c1.1-1.3,1.5-2.7,1.7-3.6c0,0,4.6-37.7,5.6-46.4 C52.2,6.7,51.4,5.5,50.1,4.5z M26,12.7c-12.2,0-22-2-22-4.4c0-0.1,0-0.2,0-0.3c0.7-2.3,10.3-4.2,22-4.2c11.9,0,21.6,1.9,22,4.3 c0,0.1,0,0.1,0,0.2C48,10.8,38.2,12.7,26,12.7z"
+    />
   </svg>
 );
 

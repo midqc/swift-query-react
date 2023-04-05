@@ -1,6 +1,6 @@
 {
   "name": "swift-query",
-  "version": "2.1.0",
+  "version": "2.5.0",
   "description": "Custom search bar with global searches and shortcuts for Chrome new tab page",
   "license": "UNLICENSED",
   "repository": {

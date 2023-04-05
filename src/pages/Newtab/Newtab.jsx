@@ -13,7 +13,6 @@ import Wallpaper from '../../components/ui/Wallpaper';
 import { useMotionVariants } from '../../hooks/useMotionVariants';
 
 import { ClipboardProvider } from '../../context/globalContext';
-import RandomPosition from '../../components/ui/RandomPosition';
 
 const LazyClipboard = lazy(() => import('../../components/Clipboard'));
 const LazySearchBar = lazy(() => import('../../components/SearchBar'));
@@ -46,7 +45,7 @@ const Newtab = (props) => {
   } = useMotionVariants();
 
   const [theme, setTheme] = useState('default');
-  const [clipboardText, setClipboardText] = useState('');
+  const [currentClipboardText, updateClipboardText] = useState('');
 
   const divThemeRef = useRef(null);
 
@@ -94,11 +93,11 @@ const Newtab = (props) => {
           </svg>
         </div>
         <Suspense fallback={<div></div>}>
-          <ClipboardProvider value={{ clipboardText, setClipboardText }}>
+          <ClipboardProvider value={{ currentClipboardText, updateClipboardText }}>
+            <DelayedDock />
             <DelayedClipboard />
             <DelayedSearchBar />
           </ClipboardProvider>
-          <DelayedDock />
         </Suspense>
       </div>
     </>

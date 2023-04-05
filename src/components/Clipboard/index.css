@@ -1,22 +1,21 @@
 #clipboardTextContainer {
-    caret-color: #000; /* set the color of the cursor */
+  caret-color: #000; /* set the color of the cursor */
+}
+
+#clipboardTextContainer::placeholder {
+  color: #999; /* set the color of the placeholder text */
+}
+
+#clipboardTextContainer::selection {
+  background-color: rgb(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  #clipboardTextContainer {
+    caret-color: #fff; /* set the color of the cursor */
   }
-  
-  #clipboardTextContainer::placeholder {
-    color: #999; /* set the color of the placeholder text */
-  }
-  
+
   #clipboardTextContainer::selection {
-    background-color: rgb(0, 0, 0, 0.1);
+    background-color: rgb(0, 0, 0, 0.2);
   }
-  
-  @media (prefers-color-scheme: dark) {
-    #clipboardTextContainer {
-      caret-color: #fff; /* set the color of the cursor */
-    }
-  
-    #clipboardTextContainer::selection {
-      background-color: rgb(0, 0, 0, 0.2);
-    }
-  }
-  
+}

@@ -60,9 +60,47 @@
 /* Set the color and rounded corners of the scrollbar thumb */
 ::-webkit-scrollbar-thumb {
   background-color: rgb(136, 136, 136, 0.4);
-  border-radius: 2px;
-  -webkit-border-radius: 2px;
-  -moz-border-radius: 2px;
-  -ms-border-radius: 2px;
-  -o-border-radius: 2px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  -ms-border-radius: 4px;
+  -o-border-radius: 4px;
+}
+
+.hide-scroll ::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  resize: none; /* add this line to remove the white square */
+  background-color: transparent;
+}
+
+.hide-scroll ::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 0px;
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  -ms-border-radius: 0px;
+  -o-border-radius: 0px;
+}
+
+* {
+  caret-color: #000; /* set the color of the cursor */
+}
+
+*::placeholder {
+  color: #999; /* set the color of the placeholder text */
+}
+
+*::selection {
+  background-color: rgb(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  * {
+    caret-color: #fff; /* set the color of the cursor */
+  }
+
+  *::selection {
+    background-color: rgb(0, 0, 0, 0.2);
+  }
 }

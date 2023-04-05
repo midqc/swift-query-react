@@ -23,16 +23,35 @@ function Clipboard() {
   const childControls = useAnimation();
   const childRef = useRef(null);
 
+  const [isEditableFocused, setIsEditableFocused] = useState(false);
+  const [isParentHovered, setIsParentHovered] = useState(false);
+
   const handleParentHoverStart = () => {
     childControls.start("hover");
+    setClipboardHoverProp({ borderRadius: ['0.6rem', '1.8rem'], zIndex: 999 })
+    setIsParentHovered(true)
   };
 
   const handleParentHoverEnd = () => {
     childControls.start("nothover");
+    setClipboardHoverProp({})
+    setIsParentHovered(false)
   };
 
+  const handleEditableFocus = () => {
+    setIsEditableFocused(true);
+    handleParentHoverStart();
+    setClipboardHoverProp({ borderRadius: ['0.6rem', '1.8rem'], zIndex: 999 })
+  };
 
-  const { clipboardText, setClipboardText } = useContext(ClipboardContext);
+  const handleEditableBlur = () => {
+    setIsEditableFocused(false);
+    handleParentHoverEnd();
+    setClipboardHoverProp({})
+  };
+
+  const { currentClipboardText, clipboardTextHistory, updateClipboardText, deleteClipboardTextHistory } = useContext(ClipboardContext);
+
   const [maxLength, setMaxLength] = useState(6);
 
   const handleCopy = async () => {
@@ -44,11 +63,11 @@ function Clipboard() {
     }
 
     // Check if the text is the same as the previous text
-    if (text === clipboardText) {
+    if (text === currentClipboardText) {
       return;
     }
 
-    setClipboardText(text);
+    updateClipboardText(text);
   };
 
   const handleFocus = async () => {
@@ -61,11 +80,11 @@ function Clipboard() {
       }
 
       // Check if the text is the same as the previous text
-      if (text === clipboardText) {
+      if (text === currentClipboardText) {
         return;
       }
 
-      setClipboardText(text);
+      updateClipboardText(text);
     } catch (error) {
       console.error(error);
     }
@@ -148,10 +167,10 @@ function Clipboard() {
     if (!url1 || !url2) {
       return url1 || url2 || '';
     }
-  
+
     const url1Parts = url1.split('/');
     const url2Parts = url2.split('/');
-    
+
     // Find the index where the two URLs differ
     let diffIndex = 0;
     while (url1Parts[diffIndex] === url2Parts[diffIndex]) {
@@ -160,15 +179,15 @@ function Clipboard() {
         break;
       }
     }
-    
+
     // If the URLs have the same domain name, return the remaining path of url2
     if (url1Parts[2] === url2Parts[2]) {
-      return '➜/' + url2Parts.slice(diffIndex).join('/');
+      return '/' + url2Parts.slice(diffIndex).join('/');
     }
-    
+
     // If the URLs have different domain names, return url2
     return url2;
-  }  
+  }
 
   const linkCount = links.length;
 
@@ -182,7 +201,7 @@ function Clipboard() {
             restDelta: 0.001,
             ...smoothMotion,
           }}
-          className='select-none text-ellipsis overflow-hidden max-w-[16rem] w-full h-fit whitespace-nowrap bg-red-600/10 dark:bg-red-400/10 text-red-600 dark:text-red-500 px-2 py-1 rounded-lg flex'
+          className='select-none text-ellipsis overflow-hidden max-w-[16rem] w-full h-fit whitespace-nowrap bg-red-600/10 dark:bg-red-400/5 text-red-600 dark:text-red-500 px-2 py-1 rounded-[0.8rem] flex'
           key={index}
         >
           <span className='flex items-center space-x-2'>
@@ -221,7 +240,7 @@ function Clipboard() {
             restDelta: 0.001,
             ...smoothMotion,
           }}
-          className='select-none text-ellipsis overflow-hidden max-w-[16rem] w-full h-fit whitespace-nowrap bg-blue-600/10 dark:bg-blue-400/10 text-blue-600 dark:text-blue-500 px-2 py-1 rounded-lg flex'
+          className='select-none text-ellipsis overflow-hidden max-w-[16rem] w-full h-fit whitespace-nowrap bg-blue-600/10 dark:bg-blue-400/5 text-blue-600 dark:text-blue-500 px-2 py-1 rounded-[0.8rem] flex'
           key={index}
         >
           <span className='flex items-center space-x-2'>
@@ -240,8 +259,8 @@ function Clipboard() {
 
   // Call filterLinks function on initial render and whenever text changes
   useEffect(() => {
-    filterLinks(clipboardText);
-  }, [clipboardText]);
+    filterLinks(currentClipboardText);
+  }, [currentClipboardText]);
 
   let countText;
 
@@ -255,29 +274,38 @@ function Clipboard() {
 
   const handleClipboardChange = (event) => {
     const innerText = event.target.innerText;
-    if (clipboardText !== innerText) {
-      setClipboardText(innerText);
+    if (currentClipboardText !== innerText) {
+      updateClipboardText(innerText);
       navigator.clipboard.writeText(innerText);
     }
   };
 
+  const [clipboardHoverProp, setClipboardHoverProp] = useState({})
+
   return (
     <div className="flex absolute left-0 justify-center w-screen">
 
-      {clipboardText && (
+      {currentClipboardText && (
         <span className="flex flex-row justify-center items-center">
           <motion.span
             onHoverStart={handleParentHoverStart}
-            onHoverEnd={handleParentHoverEnd}
-
-            className="relative w-fit flex flex-col border-highlight border-[1px] overflow-hidden border-black/20 dark:border-white/5 bg-white/80 dark:bg-[#333333CC]  focus:outline-none align-middle items-center justify-center px-4 rounded-[0.6rem] text-base text-neutral-500 backdrop-blur-md shadow-lg"
+            onHoverEnd={isEditableFocused ? handleParentHoverStart : handleParentHoverEnd}
+            onDragOver={(event) => {
+              event.preventDefault();
+            }}
+            onDrop={(event) => {
+              const text = event.dataTransfer.getData("text/plain");
+              !isParentHovered ? (updateClipboardText(text) || navigator.clipboard.writeText(text)) : updateClipboardText(currentClipboardText);
+            }}
+            className="relative w-fit flex flex-col border-highlight border-[1px] overflow-hidden border-black/20 dark:border-white/5 bg-neutral-100 dark:bg-neutral-800 focus:outline-none align-middle items-center justify-center px-4 rounded-[0.8rem] text-base text-neutral-400 dark:text-neutral-600 shadow-lg"
             style={{ top: '3.8rem' }}
             initial={{ scale: 1, translateY: '1rem' }}
-            animate={{ scale: 1, translateY: '0rem' }}
-            whileHover={{
-              borderRadius: ['0.6rem', '1.4rem'],
-              zIndex: 999,
-            }}
+            animate={{ scale: 1, translateY: '0rem', ...clipboardHoverProp }}
+            exit={{ scale: 0.8}}
+            // whileHover={{
+            //   borderRadius: ['0.6rem', '1.4rem'],
+            //   zIndex: 999,
+            // }}
             transition={{
               type: 'spring',
               restDelta: 0.001,
@@ -296,18 +324,18 @@ function Clipboard() {
               className='flex flex-nowrap shrink-0 flex-row select-none'>
               <span className='text-neutral-600 dark:text-neutral-400'>Copied: &#8205;</span>
               {(() => {
-                const textLength = clipboardText.trim().length;
+                const textLength = currentClipboardText.trim().length;
                 if (textLength > maxLength) {
                   const diff = textLength - maxLength;
-                  let trimmedText = clipboardText.trim();
+                  let trimmedText = currentClipboardText.trim();
                   let trimmedTextFront;
                   let trimmedTextEnd;
                   let ellipsis = '';
-                  if (diff >= 10) {
+                  if (diff > 6) {
                     trimmedTextFront = trimmedText.slice(0, maxLength);
                     ellipsis = <span className="opacity-50">...</span>;
-                    trimmedTextEnd = trimmedText.slice(textLength - 10);
-                  } else if (diff >= 6 && diff < 10) {
+                    trimmedTextEnd = trimmedText.slice(textLength - 6);
+                  } else if (diff === 6) {
                     trimmedTextFront = trimmedText.slice(0, maxLength);
                     ellipsis = <span className="opacity-50">...</span>;
                     trimmedTextEnd = trimmedText.slice(textLength - 3);
@@ -332,7 +360,7 @@ function Clipboard() {
                     </>
                   );
                 } else {
-                  return clipboardText.trim();
+                  return currentClipboardText.trim();
                 }
               })()}
 
@@ -359,25 +387,43 @@ function Clipboard() {
                     restDelta: 0.001,
                     ...smoothMotion,
                   }
-                }
+                },
+                // nothover: {
+                //   opacity: 1, translateY: '-24px', height: 'auto',
+                //   transition: {
+                //     type: 'spring',
+                //     restDelta: 0.001,
+                //     ...smoothMotion,
+                //   }
+                // },
               }}
               initial="nothover"
               animate={childControls}>
               <ul className='space-y-2 mt-4 select-text mb-[-7px]'>
-                <li className='border-black/5 dark:border-white/5 border-2 px-2 py-2 rounded-lg min-w-[12rem] max-w-[16rem] max-h-32 overflow-y-scroll'><pre id='clipboardTextContainer' className='font-default-regular outline-none whitespace-pre-wrap break-words overflow-wrap-break-word' contentEditable suppressContentEditableWarning onMouseLeave={handleClipboardChange}>{clipboardText}</pre></li>
 
-                {/* <li className='w-full flex flex-row justify-center items-center' style={{ marginTop: '1rem' }}>
-                  <div className='space-x-2 flex flex-row'>
-                    <div className='border-black/5 dark:border-white/5 border-2 rounded-full flex justify-center items-center h-8 w-8'><GlobeIcon height='14px' className='fill-neutral-600 dark:fill-neutral-500' /></div>
-                    <div className='border-black/5 dark:border-white/5 border-2 rounded-full flex justify-center items-center h-8 w-8'><GlobeIcon height='14px' className='fill-neutral-600 dark:fill-neutral-500' /></div>
-                    <div className='border-black/5 dark:border-white/5 border-2 rounded-full flex justify-center items-center h-8 w-8'><TrashIcon height='14px' className='fill-neutral-600 dark:fill-neutral-500' /></div>
-                  </div></li> */}
+                {!(linkCount > 0) ? (<li
+                  onFocus={handleEditableFocus}
+                  onBlur={handleEditableBlur}
+                  className='min-w-[16rem] max-w-[18rem] max-h-[15.9rem] overflow-y-scroll -m-[1.5rem] -mb-8'>
+                  <pre id='clipboardTextContainer' className='font-default-regular p-[1.5rem] outline-none whitespace-pre-wrap break-words overflow-wrap-break-word' contentEditable={false} suppressContentEditableWarning
+                    onMouseLeave={handleClipboardChange}>
+                    {currentClipboardText}
+                  </pre>
+                </li>) : (<li
+                  onFocus={handleEditableFocus}
+                  onBlur={handleEditableBlur}
+                  className='min-w-[12rem] max-w-[16rem] max-h-[7.5rem] overflow-y-scroll rounded-[0.8rem] border-2 border-black/5 dark:border-white/[0.03] p-2'>
+                  <pre id='clipboardTextContainer' className='font-default-regular outline-none whitespace-pre-wrap break-words overflow-wrap-break-word' contentEditable={false} suppressContentEditableWarning
+                    onMouseLeave={handleClipboardChange}>
+                    {currentClipboardText}
+                  </pre>
+                </li>)}
 
                 {(linkCount > 0) && (
-                  <li className='text-neutral-600 dark:text-neutral-400'>Copied Links</li>
-                )}
-                {(linkCount > 0) && (
-                  <li className='max-h-28 space-y-2 overflow-y-scroll'>{linkList}</li>
+                  <li className='pt-2 flex flex-col space-y-4 hide-scroll scroll-smooth select-none'>
+                    <span className='text-neutral-600 dark:text-neutral-400'>Copied Links</span>
+                    <span className='max-h-28 space-y-2 overflow-y-scroll rounded-[0.8rem] overflow-hidden'>{linkList}</span>
+                  </li>
                 )}
               </ul>
             </motion.div>
