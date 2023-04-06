@@ -297,11 +297,11 @@ function Clipboard() {
               const text = event.dataTransfer.getData("text/plain");
               !isParentHovered ? (updateClipboardText(text) || navigator.clipboard.writeText(text)) : updateClipboardText(currentClipboardText);
             }}
-            className="relative w-fit flex flex-col border-highlight border-[1px] overflow-hidden border-black/20 dark:border-white/5 bg-neutral-100 dark:bg-[#2B2B2C] focus:outline-none align-middle items-center justify-center px-4 rounded-[0.6rem] text-base text-neutral-500 shadow-lg"
+            className="relative w-fit flex flex-col border-highlight border-[1px] overflow-hidden border-black/20 dark:border-white/5 bg-neutral-100 dark:bg-[#2C2C2C] focus:outline-none align-middle items-center justify-center px-4 rounded-[0.6rem] text-base text-neutral-500 shadow-lg"
             style={{ top: '3.8rem' }}
             initial={{ scale: 1, translateY: '1rem' }}
             animate={{ scale: 1, translateY: '0rem', ...clipboardHoverProp }}
-            exit={{ scale: 0.8}}
+            exit={{ scale: 0.8 }}
             // whileHover={{
             //   borderRadius: ['0.6rem', '1.4rem'],
             //   zIndex: 999,
@@ -401,7 +401,7 @@ function Clipboard() {
               animate={childControls}>
               <ul className='space-y-2 mt-4 select-text mb-[-7px]'>
 
-                {!(linkCount > 0) ? (<li
+                {/* {!(linkCount > 0) ? (<li
                   onFocus={handleEditableFocus}
                   onBlur={handleEditableBlur}
                   className='min-w-[16rem] max-w-[18rem] max-h-[15.9rem] overflow-y-scroll -m-[1.5rem] -mb-8'>
@@ -421,10 +421,22 @@ function Clipboard() {
 
                 {(linkCount > 0) && (
                   <li className='pt-2 flex flex-col space-y-4 hide-scroll scroll-smooth select-none'>
-                    <span className='text-neutral-600 dark:text-neutral-400'>Copied Links</span>
+                    <span className='text-neutral-600 dark:text-neutral-400'>Links</span>
                     <span className='max-h-28 space-y-2 overflow-y-scroll rounded-[0.8rem] overflow-hidden'>{linkList}</span>
                   </li>
-                )}
+                )} */}
+
+                <li
+                  onFocus={handleEditableFocus}
+                  onBlur={handleEditableBlur}
+                  className='min-w-[16rem] max-w-[18rem] max-h-[15.9rem] overflow-y-scroll -m-[1.5rem] -mb-8'>
+                  <pre id='clipboardTextContainer' className='font-default-regular p-[1.5rem] outline-none whitespace-pre-wrap break-words overflow-wrap-break-word' contentEditable={false} suppressContentEditableWarning
+                    onMouseLeave={handleClipboardChange}>
+                    {currentClipboardText}
+                  </pre>
+                </li>
+
+
               </ul>
             </motion.div>
           </motion.span>
