@@ -343,6 +343,109 @@ export const TrashIcon = (props) => (
   </svg>
 );
 
-export const Example = (props) => (
+export const AppendIcon = (props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    xmlnsXlink="http://www.w3.org/1999/xlink"
+    x="0px"
+    y="0px"
+    width={props.width}
+    height={props.height}
+    viewBox="0 0 62 62"
+    xmlSpace="preserve"
+    {...props}
+  >
+    <defs />
+    <g>
+      <path
+         fill={props.fill}
+         className={props.className}
+        d="M56.3,27.3H5.7c-3.1,0-5.7-2.5-5.7-5.7V8.2C0,3.7,3.7,0,8.2,0h45.6C58.3,0,62,3.7,62,8.2v13.5 C62,24.8,59.5,27.3,56.3,27.3z"
+      />
+      <path
+         fill={props.fill}
+         className={props.className}
+        d="M5.7,34.7h50.7c3.1,0,5.7,2.5,5.7,5.7v13.5c0,4.5-3.7,8.2-8.2,8.2H8.2C3.7,62,0,58.3,0,53.8V40.3 C0,37.2,2.5,34.7,5.7,34.7z"
+      />
+    </g>
+  </svg>
+);
+
+export const FuseIcon = (props) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    xmlnsXlink="http://www.w3.org/1999/xlink"
+    x="0px"
+    y="0px"
+    width={props.width}
+    height={props.height}
+    viewBox="0 0 62 62"
+    xmlSpace="preserve"
+    {...props}
+  >
+    <defs />
+    <g>
+      <path
+       fill={props.fill}
+       className={props.className}
+        d="M58.5,35.1h-55c-1.9,0-3.5-1.6-3.5-3.5v-1.2c0-1.9,1.6-3.5,3.5-3.5h55c1.9,0,3.5,1.6,3.5,3.5v1.2 C62,33.5,60.4,35.1,58.5,35.1z"
+      />
+      <path
+        fill={props.fill}
+        className={props.className}
+        d="M56.3,20H5.7C2.5,20,0,17.5,0,14.4V8.2C0,3.7,3.7,0,8.2,0h45.6C58.3,0,62,3.7,62,8.2v6.2 C62,17.5,59.5,20,56.3,20z"
+      />
+      <path
+        fill={props.fill}
+        className={props.className}
+        d="M53.8,62H8.2C3.7,62,0,58.3,0,53.8v-5.7c0-3.1,2.5-5.7,5.7-5.7h50.7c3.1,0,5.7,2.5,5.7,5.7v5.7 C62,58.3,58.3,62,53.8,62z"
+      />
+    </g>
+  </svg>
+);
+
+export const BoxCheckedIcon = (props) => (
+  <svg
+  xmlns="http://www.w3.org/2000/svg"
+  xmlnsXlink="http://www.w3.org/1999/xlink"
+  x="0px"
+  y="0px"
+  width={props.width}
+  height={props.height}
+  viewBox="0 0 62 62"
+  xmlSpace="preserve"
+  {...props}
+>
+  <defs />
+  <path
+     fill={props.fill}
+     className={props.className}
+    d="M48.8,0H13.2C5.9,0,0,5.9,0,13.2v35.5C0,56.1,5.9,62,13.2,62h35.5C56.1,62,62,56.1,62,48.8V13.2 C62,5.9,56.1,0,48.8,0z M54,11.5c-1.1,1.7-2.1,3.4-3.2,5.1c-4.7,7.4-9.3,14.9-14,22.3c-2.9,4.7-5.9,9.4-8.8,14.1 c-0.5,0.8-1.3,1.3-2.2,1.3c-1,0-1.6-0.5-2.2-1.3c-0.7-0.9-1.3-1.7-2-2.6c-4.5-6-9.1-12-13.6-17.9c-0.8-1.1-0.2-2.8,0.9-3.5 c1.3-0.7,2.6-0.2,3.5,0.9c0.7,0.9,1.3,1.7,2,2.6c3.7,4.9,7.5,9.9,11.2,14.8c0.4-0.7,0.8-1.3,1.2-2c4.7-7.4,9.3-14.9,14-22.3 c2.9-4.7,5.9-9.4,8.8-14.1c0.7-1.2,2.2-1.6,3.5-0.9C54.3,8.6,54.7,10.3,54,11.5z"
+  />
+</svg>
+);
+
+export const BoxUncheckedIcon = (props) => (
+  <svg
+  xmlns="http://www.w3.org/2000/svg"
+  xmlnsXlink="http://www.w3.org/1999/xlink"
+  x="0px"
+  y="0px"
+  width={props.width}
+  height={props.height}
+  viewBox="0 0 62 62"
+  xmlSpace="preserve"
+  {...props}
+>
+  <defs />
+  <path
+    fill={props.fill}
+    className={props.className}
+    d="M48.8,0H13.2C5.9,0,0,5.9,0,13.2v35.5C0,56.1,5.9,62,13.2,62h35.5C56.1,62,62,56.1,62,48.8V13.2 C62,5.9,56.1,0,48.8,0z M51.7,33.5l-41.4,0c-1.4,0-2.5-1.1-2.5-2.5s1.1-2.5,2.5-2.5l41.4,0c1.4,0,2.5,1.1,2.5,2.5 S53.1,33.5,51.7,33.5z"
+  />
+</svg>
+);
+
+export const NULL = (props) => (
   <svg></svg>
 );

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion, MotionConfig, AnimatePresence } from "framer-motion";
 import { useMotionVariants } from "../../../hooks/useMotionVariants";
 
-import { NotesIcon, CrossIcon } from "../../Icons";
+import { CrossIcon } from "../../Icons";
 
 const WindowDiv = ({ children, windowVisible, windowIndex }) => {
 

@@ -8,7 +8,7 @@ import './index.css'
 import WindowDiv from '../../components/ui/WindowDiv';
 import { ClipboardContext } from '../../context/globalContext';
 
-import { NotesIcon, TipsIcon, OptionsIcon, ClipboardIcon, VideoIcon, PluginsIcon, MoreAppsIcon, CrossIcon, PinIcon, TrashIcon } from '../Icons';
+import { NotesIcon, TipsIcon, OptionsIcon, ClipboardIcon, VideoIcon, PluginsIcon, MoreAppsIcon, CrossIcon, PinIcon, TrashIcon, AppendIcon, FuseIcon, BoxCheckedIcon, BoxUncheckedIcon } from '../Icons';
 
 const iconDefaultClass = 'dark:fill-white/60 fill-black/80'
 
@@ -165,31 +165,15 @@ const Dock = () => {
     const [isNotesPinned, setIsNotesPinned] = useState(false);
     const [isClipboardPinned, setIsClipboardPinned] = useState(false);
 
-    const { currentClipboardText, clipboardTextHistory, updateClipboardText, deleteClipboardTextHistory } = useContext(ClipboardContext);
+    const { currentClipboardText, clipboardTextHistory, updateClipboardText, deleteClipboardTextHistory, setClipboardTextHistory } = useContext(ClipboardContext);
 
-    const handleClipboardChange = (event) => {
-        const preDivRef = event.target;
-        const innerText = preDivRef.innerText;
-        const selection = window.getSelection();
-        const range = selection.getRangeAt(0);
-        const start = range.startOffset;
-        const end = range.endOffset;
-        if (currentClipboardText !== innerText) {
-          updateClipboardText(innerText);
-          navigator.clipboard.writeText(innerText).then(() => {
-            preDivRef.innerText = innerText;
-            if (start <= preDivRef.textContent.length) {
-              range.setStart(preDivRef.firstChild, start);
-            }
-            if (end <= preDivRef.textContent.length) {
-              range.setEnd(preDivRef.firstChild, end);
-            }
-            selection.removeAllRanges();
-            selection.addRange(range);
-          });
+    const handleTextAreaClipboardChange = () => {
+        if (currentClipboardText !== textAreaValue) {
+            updateClipboardText(textAreaValue);
+            // navigator.clipboard.writeText(textAreaValue);
         }
-      };      
-      
+    };
+
 
     const [isCurrentWindow, setIsCurrentWindow] = useState('');
 
@@ -225,20 +209,38 @@ const Dock = () => {
         };
     }, [isNotesPinned, isClipboardPinned]);
 
+    const [customFileName, setCustomFileName] = useState({ found: false, fileName: '.txt', fileText: '' });
+    const [fileText, setFileText] = useState(currentClipboardText)
+
+    useEffect(() => {
+        const regex = /^([\w-]+\.[\w-]+)\s+(.*)$/;
+        const match = fileText.match(regex);
+        if (match) {
+            const fileName = match[1];
+            const fileText = match[2].trim();
+            setCustomFileName({ found: true, fileName, fileText });
+            console.log(fileText);
+        } else {
+            setCustomFileName({ found: false, fileName: '.txt', fileText: '' });
+        }
+    }, [fileText]);
+
     const handleDownloadClick = (textInput, fileExtension = '.txt', preFileName = '') => {
-        const currentDate = new Date();
-        const formattedDate = currentDate.toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-
         let text = textInput;
-        let cleanedFileName = preFileName.replace(/[?\/\\*<>|"]/g, ''); // removes unwanted characters
-        let preName = (cleanedFileName.trim().length === 0 ? text.trim().substring(0, 12) + '... ' : cleanedFileName);
+        let fileName = preFileName.trim();
 
-        const filename = preName + formattedDate + ' (Swift Query)' + fileExtension;
+        const fileExtensionRegex = /^.*\.(.*)$/;
+        const matches = fileExtension.match(fileExtensionRegex);
+
+        if (matches) {
+            fileName = fileExtension.replace(/[?\/\\*<>|"]/g, '');
+        } else {
+            fileName = fileName.replace(/[?\/\\*<>|"]/g, '');
+            if (!fileName) {
+                fileName = text.trim().substring(0, 46) + '... ';
+            }
+            fileName += fileExtension;
+        }
 
         const blob = new Blob([text], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
@@ -246,142 +248,144 @@ const Dock = () => {
         const a = document.createElement("a");
         a.style.display = "none";
         a.href = url;
-        a.download = filename;
+        a.download = fileName;
         document.body.appendChild(a);
         a.click();
         URL.revokeObjectURL(url);
         document.body.removeChild(a);
     };
 
+
+    const regexPatterns = [
+        { name: "jsxTest", pattern: /(import\s+\*\s+as\s+React\s+from\s+'react')|(import\s+React,\s*\{\s*(useState|useEffect|useContext|useCallback|useMemo|useRef|useReducer)\s*\}\s*from\s+'react')|(import\s+\{\s*(useState|useEffect|useContext|useCallback|useMemo|useRef|useReducer)\s*\}\s+from\s+'react')|(export\s+default\s)|(<\s*[a-zA-Z]+\s*(\S*\s*=\s*".*?"\s*)*\/?\s*>)/ },
+        { name: "jsTest", pattern: /(function\s*\()|(var\s+\w+\s*=)|(const\s+\w+\s*=)|(let\s+\w+\s*=)|(\w+\s*\(\s*\))|(\[\s*\])|(\{\s*\})|(\.\w+)|(\+\+|\-\-)|(\=\=)|(\!\=)|(\|\|)|(\&\&)|(\?\:)|(\=\>)/ },
+        { name: "jsonTest", pattern: /^{\s*"[\w-]+":\s*(?:"(?:\\.|[^"\\])*"|true|false|null|\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*(?:,\s*"[\w-]+":\s*(?:"(?:\\.|[^"\\])*"|true|false|null|\d+(?:\.\d+)?(?:[eE][-+]?\d+)?)\s*)*}\s*$/ },
+        { name: "pyTest", pattern: /(def\s+\w+\s*\()|(\bimport\s+\w+)|(\bfrom\s+\w+\s+import\b)|(^[\t ]+)|(^[\t ]*#.*$)|(pandas|numpy|matplotlib|django)|(\+\+|\-\-)|(\*\*)|(\=\=)|(\!\=)|(\|\|)|(\&\&)|(\bif\b)|(\belif\b)|(\belse\b)|(\bfor\b)|(\bin\b)|(\bwhile\b)|(\btry\b)|(\bexcept\b)|(\bfinally\b)/ },
+        { name: "cppTest", pattern: /^\s*(#include\s*<\w+\.h>|#include\s*"\w+\.h")|\b(int|float|double|void)\s+\w+\s*\(|\bstd::vector\s*<.+>\s+\w+\s*\(|\bstd::unique_ptr\s*<.+>\s+\w+\s*\(|\bstd::shared_ptr\s*<.+>\s+\w+\s*\(|\bstd::make_unique\s*<.+>\s*\(|\bstd::make_shared\s*<.+>\s*\(|\bstd::sort\s*\(|\bstd::find\s*\(|\bstd::cout\s*<<|\bstd::endl|(\+\+|\-\-)|(\=\=)|(\!\=)|(\|\|)|(\&\&)/ },
+        { name: "csvTest", pattern: /^(?:"(?:[^"]|"")*"|[^,"\r\n]*)(?:,(?:"(?:[^"]|"")*"|[^,"\r\n]*))*$/gm },
+        { name: "svgTest", pattern: /^<svg\s+(?<required>(?:width|height)="[\d\.]+(px|%)?"\s+viewBox="[\d\.]+\s+[\d\.]+\s+[\d\.]+\s+[\d\.]+")(?<optional>(?:\s+\w+="[^"]*")*)\s*>(?:[\s\S]*?(?:<\/?(?:path|rect|circle|ellipse|line|polyline|polygon|text|g|defs)\b(?:\s+\w+="[^"]*")*\s*\/?>[\s\S]*?<\/(?:path|rect|circle|ellipse|line|polyline|polygon|text|g|defs)>\s*)+)<\/svg>$/i },
+        { name: "htmlTest", pattern: /<!DOCTYPE\s[^>]*>|<meta\s[^>]*>|<title\b[^>]*>.*?<\/title>|<\s*\w+(?:\s+\w+(?:\s*=\s*(?:".*?"|'.*?'|[\^'">\s]+))?)*\s*\/?>|<!--.*?-->|<!\[CDATA\[.*?\]\]>|<style\b[^>]*>.*?<\/style>|<script\b[^>]*>.*?<\/script>|<h\d\b[^>]*>.*?<\/h\d>|<p\b[^>]*>.*?<\/p>|<a\b[^>]*>.*?<\/a>|<img\b[^>]*>|<ul\b[^>]*>.*?<\/ul>|<ol\b[^>]*>.*?<\/ol>|<li\b[^>]*>.*?<\/li>|<table\b[^>]*>.*?<\/table>|<tr\b[^>]*>.*?<\/tr>|<th\b[^>]*>.*?<\/th>|<td\b[^>]*>.*?<\/td>|<div\b[^>]*>.*?<\/div>/s },
+        { name: "cssTest", pattern: /^\s*(?:\/\*[\s\S]*?\*\/\s*)*(?:\.[a-zA-Z][a-zA-Z0-9_-]*|\#[a-zA-Z][a-zA-Z0-9_-]*)\s*(?:\{(?:[\s\S]*?(?:(?<=^|\s)(?:background(?:-(?:color|image))?|color|font-(?:family|size|weight)|height|margin|padding|text-align|text-decoration|width|(?:border|outline)-(?:width|style|color)|display|float|position|top|left|right|bottom|z-index)\s*:\s*[^;}]*;)*[\s\S]*?)\})/ },
+        { name: "csTest", pattern: /\b(using|namespace|class|struct|interface|delegate|enum|void|object|string|bool|int|long|decimal|float|double)\s+(\w+|\[.*?\])\s*(<.*?>)?\s*(\(.+\))?\s*({|=\s*new)/ },
+        { name: "cTest", pattern: /^\s*#(include|define)\s+<\w+\.h>|\s*#(include|define)\s+"\w+\.h"|\b(unsigned\s+)?(char|short|int|long|float|double|void)\s+\*?\s*\w+\s*(\[[^\]]+\])?\s*(\([^{}]*\))?\s*\{|for\s*\([^;]*;[^;]*;[^)]*\)\s*\{|while\s*\([^)]*\)\s*\{|do\s*\{\s*[^}]*\s*\}\s*while\s*\([^)]*\);|if\s*\([^)]*\)\s*\{\s*[^}]*\s*\}\s*(else\s*\{\s*[^}]*\s*\})?|switch\s*\([^)]*\)\s*\{\s*[^}]*\s*\}|case\s+[\w\s,]+:\s*|default\s*:\s*|return\s+[\w\*\[\]\(\)\+\-\/\%]+;/ },
+        { name: "goTest", pattern: /\bimport\s+\(\s*(\n|\s)*(["'`\/])(.|[\n\r])*?\2\s*\)|\bpackage\s+\w+|\bfunc\s+\w+\s*\(|\bfmt\.(Print|Println|Printf|Error|Sprint|Sprintf|Fprint|Fprintf)\(|\blogrus\.(Print|Println|Printf|Error|Warn|Info|Debug|Trace|Panic|Fatal)\(|\bgorilla\/mux\.(NewRouter|HandleFunc|Path|Methods|Queries|Headers|Schemes|Subrouter|NotFoundHandler|MethodNotAllowedHandler)\(|\bhttp\.(ListenAndServe|HandleFunc|Handle)\(|\bjson\.(Marshal|Unmarshal)\(|\btime\.(Now|Parse)\(|\bos\.(Open|Create)\(|\bioutil\.(ReadFile|WriteFile)\(|\bnet\/http\/httptest\.(NewRecorder|NewRequest)\(|\btesting\.(T|B)\{|sync\.(WaitGroup|Mutex|RWMutex)\{|defer\s+\w+\(|\bconst\s+\w+\s*=\s*\w+|\w+\s*:=/ },
+        { name: "sqlTest", pattern: /\b(CREATE|SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|TRUNCATE|FROM|JOIN|ON|WHERE|GROUP BY|HAVING|ORDER BY|LIMIT|OFFSET|AS|CASE|WHEN|THEN|ELSE|END|PRIMARY KEY|FOREIGN KEY|REFERENCES|INDEX|UNIQUE|CHECK|DEFAULT|NULL|NOT NULL|AND|OR|NOT|LIKE|IN|BETWEEN|EXISTS|COUNT|SUM|AVG|MIN|MAX|DATE|TIME|TIMESTAMP)\b/i },
+        { name: "phpTest", pattern: /(<\?php|\$[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\s*=|\becho\s+('|")|\bif\s*\(|\belse\s*\{|->|\barray\(|\bfunction\s+([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)?\s*\()/i },
+        { name: "rsTest", pattern: /\b(fn|let|use|match|if|else|while|for|loop|break|continue|return|const|static|unsafe|mut|ref|self|super|crate|as|in|where)\s+\w+|struct\s+\w+|enum\s+\w+|type\s+\w+|\bimpl\s+\w+|\btrait\s+\w+|\bmod\s+\w+|pub(\s+[(][^\n]*[)])?\s+(fn|struct|enum|type|trait|mod)\s+\w+|(\bunsafe\s+)?(extern\s+["C"]\s+\{[^{}]*\})|\buse\s+(serde|tokio)([_\w\d]+)*/ },
+        { name: "xmlTest", pattern: /^<\?xml\s+version=["'][^"']*["']\s*(?:encoding=["'][^"']*["']\s*)?(?:standalone=["'][^"']*["']\s*)?\?>\s*<([a-z]+)(?:\s+[a-z]+(?:\s*=\s*(?:"[^"]*"|'[^']*'))?)*\s*>(?:[\s\S]*?(?=<\/\1\s*>))+<\/\1\s*>$/i },
+        { name: "batTest", pattern: /^(?:@echo off|echo[^(]|\bset\s+\w+=|\bif\s+not\s+exist\b|\bif\s+exist\b|\bfor\s+\/[dfr]*\s+%?\w+%\s+in\s+\([^\)]+\)\s+do|\bgoto\s+\w+)/i },
+        { name: "ps1Test", pattern: /^(?:function\s|\$[\w\d]+\s*=|Write-Output\b|Write-Host\b|\bImport-Module\b|\bNew-Module\b|\bGet-Module\b|\bRemove-Module\b|\bForEach-Object\b|\bSelect-Object\b|\bWhere-Object\b|\bIf\b|\bElseIf\b|\bElse\b|\bSwitch\b|\bTry\b|\bCatch\b|\bFinally\b|\bThrow\b|\bReturn\b|\bExit\b|\bAdd-Type\b|\bRegister-ObjectEvent\b|\bUnregister-Event\b)/i },
+        { name: "shTest", pattern: /^#!\/usr\/bin\/(env )?(bash|sh)( |-)(\d\.\d)?(\s|$)/ },
+        { name: "yamlTest", pattern: /^\s*(#.*|\w[-\w]*):\s*((?:(?<=\s)[\w-]+:\s+\S.*\n)+|"[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'|>[ ]*\n(?:(?:[^\n]+|\n(?=[ ]{0,3}\S))+)|\S.*?)\s*(?:(?<=\s)#.*)?$/m },
+        { name: "mdTest", pattern: /^(#+\s*)?(.*\s+)?\[[\w\d\s-]*\.md\][^#\n]*$/m },
+        { name: "dockerfileTest", pattern: /^FROM\s+(?:\w[\w.-]*\/)?[\w.-]+(?:\:[\w.-]+)?(?:\s+AS\s+\w+)?(?:\s+USER\s+\w+)?(?:\s+WORKDIR\s+\S+)?(?:\s+ARG\s+\w+)?(?:\s+ENV\s+\w+\s+\S+)?(?:\s+COPY\s+.*?\s+\S+)?(?:\s+ADD\s+.*?\s+\S+)?(?:\s+RUN\s+.*?\s*)*$/m },
+        { name: "ipynbTest", pattern: /^[\s\S]*# In\[[0-9]+\]:\s*\[[^\]]*\][\s\S]*/ },
+        { name: "rTest", pattern: /^(?:use\s+\w+|fn\s+\w+\s*\(|struct\s+\w+|enum\s+\w+|mod\s+\w+|pub\s+(?:fn|struct|enum)\s+\w+|\bOption\b|\bResult\b|macro_rules!\s+\w+\s*\{|trait\s+\w+\s*\{|'\w+|unsafe\s*\{|#\[\w+\])/i },
+    ]
+
     const detectTextType = (text) => {
+        const FPT = (nameToFind) => {
+            return regexPatterns.find(obj => obj.name === nameToFind)?.pattern.test(text);
+        }
+
         let fileExtension = [];
 
-        if (/function\s*\(|var\s+\w+\s*=|const\s+\w+\s*=|let\s+\w+\s*=/.test(text)) {
-            fileExtension.push('.js');
+        if (FPT('jsTest')) {
+            fileExtension.push('.js', '.ts');
         }
-        if (/def\s+\w+\s*\(|\bimport\s+\w+|\bfrom\s+\w+\s+import\b/.test(text)) {
+        if (FPT('pyTest') && !FPT('jsxTest')) {
             fileExtension.push('.py');
         }
-        if (/^\s*(#include\s*<\w+\.h>|#include\s*"\w+\.h")|\bint\s+\w+\s*\(|\bfloat\s+\w+\s*\(|\bdouble\s+\w+\s*\(|\bvoid\s+\w+\s*\(/.test(text)) {
+        if (FPT('cppTest')) {
             fileExtension.push('.c++');
         }
-        if (/^[\w\s,]+(?:\r?\n[\w\s,]+)*\r?$/.test(text)) {
+        if (FPT('csvTest') && !FPT('phpTest') && !FPT('sqlTest') && !FPT('jsTest') && !FPT('htmlTest')) {
             fileExtension.push('.csv');
         }
-        if (/<svg[\s\S]*<\/svg>/.test(text)) {
+        if (FPT('svgTest')) {
             fileExtension.push('.svg');
         }
-        if (/<html[\s\S]*?>(<!DOCTYPE[\s\S]*?>)?[\s\S]*?<\/html>/.test(text)) {
+        if (FPT('htmlTest')) {
             fileExtension.push('.html');
         }
-        if (/^\s*(\/\*([\s\S]*?)\*\/)?\s*(\.[a-zA-Z][a-zA-Z0-9_-]*|\#[a-zA-Z][a-zA-Z0-9_-]*)\s*\{[\s\S]*?\}/.test(text)) {
+        if (FPT('cssTest')) {
             fileExtension.push('.css');
         }
-        if (/using\s+\w+\s*;|public\s+class\s+\w+\s*{|private\s+class\s+\w+\s*{|static\s+void\s+\w+\s*\(|\bint\s+\w+\s*=|\bstring\s+\w+\s*=|\bfloat\s+\w+\s*=|\bdouble\s+\w+\s*=/.test(text)) {
+        if (FPT('csTest')) {
             fileExtension.push('.cs');
         }
-        if (/^\s*#include\s*<\w+\.h>|\s*#include\s*"\w+\.h"|int\s+\w+\s*\(|float\s+\w+\s*\(|double\s+\w+\s*\(|void\s+\w+\s*\(/.test(text)) {
+        if (FPT('cTest')) {
             fileExtension.push('.c');
         }
-        if (/package\s+\w+|\bfunc\s+\w+\s*\(/.test(text)) {
+        if (FPT('goTest')) {
             fileExtension.push('.go');
         }
-        if (/CREATE\s+(TABLE|DATABASE|INDEX)|SELECT\s+\*?\s+FROM|INSERT\s+INTO/.test(text)) {
+        if (FPT('sqlTest') && !FPT('jsxTest') && !FPT('phpTest')) {
             fileExtension.push('.sql');
         }
-        if (/\<\?php|\$[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*\s*=|\becho\s+('|")/.test(text)) {
+        if (FPT('phpTest') && !FPT('jsxTest')) {
             fileExtension.push('.php');
         }
-        if (/fn\s+\w+\s*\(|let\s+\w+\s*=|use\s+\w+::|\bmatch\s+/.test(text)) {
+        if (FPT('rsTest') && !FPT('jsxTest')) {
             fileExtension.push('.rs');
         }
-        if (/^\s*<\?xml\s+version=["'][^"']*["']\s+encoding=["'][^"']*["']\s*\?>/.test(text)) {
+        if (FPT('xmlTest')) {
             fileExtension.push('.xml');
         }
-        if (/^\s*\{[\s\S]*"\w+"\s*:/.test(text)) {
+        if (FPT('jsonTest')) {
             fileExtension.push('.json');
         }
-        if (/^@echo off|echo[^(]|\bset\s+\w+=|\bif\s+[not]*\s*exist\b|\bfor\s+\w+\s+in\s+\([^\)]+\)\s+do|\bgoto\s+\w+/.test(text)) {
+        if (FPT('batTest')) {
             fileExtension.push('.bat');
         }
-        if (/^function\s|\$[\w\d]+\s*=|Write-Output\b|Write-Host\b|\bImport-Module\b/.test(text)) {
+        if (FPT('ps1Test')) {
             fileExtension.push('.ps1');
         }
-        if (text.startsWith('#!/bin/bash') || text.startsWith('#!/bin/sh')) {
+        if (FPT('shTest')) {
             fileExtension.push('.sh');
         }
-        if (/^\s*\[\w+]\s*$|^\s*\w+\s*=.*/m.test(text)) {
-            fileExtension.push('.toml');
-        }
-        if (/^\s*[\w-]+:\s+.*/m.test(text)) {
+        if (FPT('yamlTest')) {
             fileExtension.push('.yaml');
         }
-        if (/^#*\s+.*/m.test(text)) {
+        if (FPT('mdTest')) {
             fileExtension.push('.md');
         }
-        if (/^FROM\s+[\w\d\/\.-]+/.test(text)) {
+        if (FPT('dockerfileTest')) {
             fileExtension.push('.dockerfile');
         }
-        if (/^[\s\S]*# In\[\d+\]:/.test(text)) {
+        if (FPT('ipynbTest')) {
             fileExtension.push('.ipynb');
         }
-        if (/^library\(/.test(text) || /^require\(/.test(text)) {
+        if (FPT('rTest')) {
             fileExtension.push('.R');
+        }
+
+        const jsxNameTest = /export\s+default\s+([^\s;]+)/;
+
+        if (jsxNameTest.test(text)) {
+            let jsxName = RegExp.$1 + '.jsx';
+            fileExtension.push(`${jsxName}`, '.tsx');
+        } else if (FPT('jsxTest')) {
+            fileExtension.push('.jsx', '.tsx');
         }
 
         return fileExtension
     }
 
-    const preDivRef = useRef(null);
-
-    function handleClipboardDrop(event) {
-        event.preventDefault();
-
-        const text = event.dataTransfer.getData("text/plain");
-        const preDiv = preDivRef.current;
-
-        if (preDiv) {
-            const selection = window.getSelection();
-
-            if (selection.rangeCount === 0) {
-                const range = document.createRange();
-                range.setStart(preDiv, preDiv.childNodes.length);
-                range.setEnd(preDiv, preDiv.childNodes.length);
-                selection.removeAllRanges();
-                selection.addRange(range);
-            }
-
-            const range = selection.getRangeAt(0);
-
-            const textNode = document.createTextNode(text);
-            const markerNode = document.createTextNode("");
-            const insertNode = document.createElement("span");
-            insertNode.appendChild(textNode);
-            insertNode.appendChild(markerNode);
-
-            range.insertNode(insertNode);
-
-            const newRange = document.createRange();
-            newRange.setStart(insertNode.childNodes[0], 0);
-            newRange.setEnd(markerNode, 0);
-            selection.removeAllRanges();
-            selection.addRange(newRange);
-        }
+    const clearHistory = () => {
+        setClipboardTextHistory([currentClipboardText])
     }
 
-    function handleClipboardPaste(event) {
-        event.handleClipboardChange();
-    }
+    const [isAppending, setIsAppending] = useState(false)
+    const [isFusing, setIsFusing] = useState(false)
 
-    useEffect(() => {
-        const divRef = preDivRef.current;
-        if (divRef) {
-            divRef.addEventListener('paste', handleClipboardPaste);
-            return () => {
-                divRef.removeEventListener('paste', handleClipboardPaste);
-            };
-        }
-    }, [preDivRef]);
+    const textAreaRef = useRef(null);
+
+    const [textAreaValue, setTextAreaValue] = useState('');
+
+    const handleTextAreaChange = (event) => {
+        setTextAreaValue(event.target.value);
+    };
 
     return (
         <>
@@ -475,7 +479,7 @@ const Dock = () => {
             </div>
 
             <WindowDiv windowVisible={isNotesVisible ? true : false} windowIndex={isCurrentWindow === 'notes' ? 999 : (isNotesVisible && !isNotesPinned ? 99 : 9)}>
-                <div className='flex flex-row items-center justify-between'>
+                <div className='flex flex-row items-center justify-between' onClick={() => setIsCurrentWindow('notes')}>
                     <span className='text-2xl text-neutral-600 dark:text-neutral-400 flex flex-row w-fit items-center justify-center select-none bottom-0 font-default-light'>
                         <NotesIcon height='24px' className='fill-neutral-600 dark:fill-neutral-400 mr-4' />Notes
                         <motion.div
@@ -520,7 +524,7 @@ const Dock = () => {
             </WindowDiv>
 
             <WindowDiv windowVisible={isClipboardVisible ? true : false} windowIndex={isCurrentWindow === 'clipboard' ? 999 : (isClipboardVisible && !isClipboardPinned ? 99 : 9)}>
-                <div className='flex flex-row items-center justify-between' onDragStart={() => isClipboardPinned ? setIsClipboardVisible(true) : setIsClipboardVisible(false)}>
+                <div className='flex flex-row items-center justify-between' onClick={() => setIsCurrentWindow('clipboard')}>
                     <span className='text-2xl text-neutral-600 dark:text-neutral-400 flex flex-row w-fit items-center justify-center select-none bottom-0 font-default-light'>
                         <ClipboardIcon height='24px' className='fill-neutral-600 dark:fill-neutral-400 mr-4' />Clipboard
                         <motion.div
@@ -551,10 +555,10 @@ const Dock = () => {
                 </div>
 
                 <div className=' flex flex-row space-x-4 w-full h-[-webkit-fill-available] mt-4 mb-8 text-lg'>
-                    <pre ref={preDivRef} onDragOver={(event) => event.preventDefault()} onDrop={handleClipboardDrop} onMouseLeave={handleClipboardChange} className='font-default-regular p-4 w-full rounded-xl text-neutral-600 dark:text-neutral-500 bg-black/5 dark:bg-white/[0.03] shrink-0 md:w-2/3 h-full overflow-y-scroll hide-scroll outline-none whitespace-pre-wrap break-words overflow-wrap-break-word' contentEditable suppressContentEditableWarning>{currentClipboardText}</pre>
+                    <pre className='w-full h-full shrink-0 md:w-2/3'><textarea ref={textAreaRef} value={textAreaValue} onChange={handleTextAreaChange} className='font-default-regular p-4 w-full rounded-xl text-neutral-600 dark:text-neutral-500 bg-black/5 dark:bg-white/[0.03] h-full overflow-y-scroll hide-scroll outline-none whitespace-pre-wrap break-words overflow-wrap-break-word'></textarea></pre>
                     <div className='flex flex-col space-y-4 w-[-webkit-fill-available]'>
-                        <span className='text-xl text-neutral-600 dark:text-neutral-400 select-none flex flex-row space-x-4 justify-between items-center'>History</span>
-                        {clipboardTextHistory.length <= 1 && <span className='rounded-xl bg-neutral-600/5 dark:bg-neutral-400/[0.03] px-2 py-1 text-neutral-600/40 dark:text-neutral-400/10 flex flex-row justify-center items-center select-none h-[5.32rem] text-center'>Make changes<br />to enable history</span>}
+                        <span className='text-xl text-neutral-600 dark:text-neutral-400 select-none flex flex-row space-x-4 justify-between items-center'>History{clipboardTextHistory.length > 1 && <motion.span initial={{ translateX: '20%' }} animate={{ translateX: '0' }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.95 }} className='flex flex-row justify-center items-center px-3 py-1 rounded-xl bg-black/5 dark:bg-white/[0.03] text-sm cursor-pointer text-neutral-400 dark:text-neutral-600 outline-none' onClick={() => clearHistory()}>Clear</motion.span>}</span>
+                        {clipboardTextHistory.length <= 1 && <span className='rounded-xl bg-black/5 dark:bg-white/[0.03] px-2 py-1 text-neutral-600/40 dark:text-neutral-400/10 flex flex-row justify-center items-center select-none h-[5.32rem] text-center'>Make changes<br />to enable history</span>}
                         {clipboardTextHistory.length > 1 && <ul className='text-base text-neutral-500 select-none overflow-y-scroll hide-scroll space-y-4 rounded-xl max-h-[43%]'>
                             {clipboardTextHistory.map((text, index) => (
                                 index > 0 && <div className='relative group'><motion.li key={index} onClick={() => updateClipboardText(text)} initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='rounded-xl outline-none h-[5.32rem] overflow-hidden bg-black/5 dark:bg-white/[0.03] px-4 py-2 cursor-pointer' style={{ overflowWrap: 'anywhere' }}>
@@ -568,9 +572,14 @@ const Dock = () => {
                         <div className='flex flex-col space-y-4 '>
                             <span className='text-xl text-neutral-600 dark:text-neutral-400 select-none'>Actions</span>
                             <div className='flex flex-wrap -m-1'>
-                                <motion.button onClick={() => handleDownloadClick(currentClipboardText)} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='w-fit px-3 py-1 text-neutral-600 dark:text-neutral-500 rounded-xl bg-black/10 dark:bg-white/[0.03] text-base m-1 select-none'>Download as .txt</motion.button>
+                                <motion.button onClick={() => isAppending ? setIsAppending(false) : setIsAppending(true) & setIsFusing(false)} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='outline-none w-fit px-3 py-1 text-neutral-600 dark:text-neutral-500 rounded-xl bg-black/10 dark:bg-white/[0.03] text-base m-1 select-none flex flex-row justify-center items-center'>{isAppending ? <><BoxCheckedIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Appending</> : <><AppendIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Append</>}</motion.button>
+                                <motion.button onClick={() => isFusing ? setIsFusing(false) : setIsFusing(true) & setIsAppending(false)} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='outline-none w-fit px-3 py-1 text-neutral-600 dark:text-neutral-500 rounded-xl bg-black/10 dark:bg-white/[0.03] text-base m-1 select-none flex flex-row justify-center items-center outline-none'>{isFusing ? <><BoxCheckedIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Fusing</> : <><FuseIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Fuse</>}</motion.button>
+                                <motion.button onClick={() => !isNotesPinned ? setIsNotesVisible(!isNotesVisible) & setIsCurrentWindow('notes') : setIsCurrentWindow('notes')} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='outline-none w-fit px-3 py-1 text-neutral-600 dark:text-neutral-500 rounded-xl bg-black/10 dark:bg-white/[0.03] text-base m-1 select-none flex flex-row justify-center items-center'><NotesIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Note</motion.button>
+                                <motion.button onClick={() => handleDownloadClick(currentClipboardText)} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='outline-none w-fit px-3 py-1 text-neutral-600 dark:text-neutral-500 rounded-xl bg-black/10 dark:bg-white/[0.03] text-base m-1 select-none'>Download as {customFileName.found ? customFileName.fileName : '.txt'}</motion.button>
                                 {detectTextType(currentClipboardText).map((type, index) => (
-                                    <motion.button key={index} onClick={() => handleDownloadClick(currentClipboardText, type)} initial={{ scale: 0.8 }} animate={{ scale: 1 }} exit={{ scale: 0.8 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='w-fit px-3 py-1 dark:text-neutral-500 rounded-xl bg-white/[0.03] text-base m-1 select-none'>{type}</motion.button>
+                                    <motion.button key={index} onClick={() => handleDownloadClick(currentClipboardText, type)} initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='w-fit px-3 py-1 bg-black/10 dark:bg-white/[0.03] text-neutral-600 dark:text-neutral-500 rounded-xl text-base m-1 select-none outline-none'>
+                                        {type}
+                                    </motion.button>
                                 ))}
                             </div>
                         </div>
@@ -579,7 +588,7 @@ const Dock = () => {
             </WindowDiv>
 
             <WindowDiv windowVisible={isOptionsVisible ? true : false} windowIndex={isCurrentWindow === 'options' ? 999 : (isOptionsVisible ? 99 : 9)}>
-                <div className='flex flex-row items-center justify-between'>
+                <div className='flex flex-row items-center justify-between' onClick={() => setIsCurrentWindow('options')}>
                     <span className='text-2xl text-neutral-600 dark:text-neutral-400 flex flex-row w-fit items-center justify-center select-none bottom-0 font-default-regular'>
                         <OptionsIcon height='24px' className='fill-neutral-600 dark:fill-neutral-400 mr-4' />Options</span>
                     {/* <motion.div

@@ -60,7 +60,8 @@ export const ClipboardProvider = ({ children }) => {
         currentClipboardText,
         clipboardTextHistory,
         updateClipboardText,
-        deleteClipboardTextHistory
+        deleteClipboardTextHistory,
+        setClipboardTextHistory
       }}
     >
       {children}

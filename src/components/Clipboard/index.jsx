@@ -128,7 +128,7 @@ function Clipboard() {
         try {
           return new URL(link).href;
         } catch (error) {
-          console.error(`Invalid URL: ${link}`, error);
+          // console.error(`Invalid URL: ${link}`, error);
           return null;
         }
       })
@@ -297,7 +297,7 @@ function Clipboard() {
               const text = event.dataTransfer.getData("text/plain");
               !isParentHovered ? (updateClipboardText(text) || navigator.clipboard.writeText(text)) : updateClipboardText(currentClipboardText);
             }}
-            className="relative w-fit flex flex-col border-highlight border-[1px] overflow-hidden border-black/20 dark:border-white/5 bg-neutral-100 dark:bg-neutral-800 focus:outline-none align-middle items-center justify-center px-4 rounded-[0.8rem] text-base text-neutral-400 dark:text-neutral-600 shadow-lg"
+            className="relative w-fit flex flex-col border-highlight border-[1px] overflow-hidden border-black/20 dark:border-white/5 bg-neutral-100 dark:bg-[#2B2B2C] focus:outline-none align-middle items-center justify-center px-4 rounded-[0.6rem] text-base text-neutral-500 shadow-lg"
             style={{ top: '3.8rem' }}
             initial={{ scale: 1, translateY: '1rem' }}
             animate={{ scale: 1, translateY: '0rem', ...clipboardHoverProp }}
