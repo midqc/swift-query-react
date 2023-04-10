@@ -8,7 +8,7 @@ import './index.css'
 import WindowDiv from '../../components/ui/WindowDiv';
 import { ClipboardContext } from '../../context/globalContext';
 
-import { NotesIcon, TipsIcon, OptionsIcon, ClipboardIcon, VideoIcon, PluginsIcon, MoreAppsIcon, CrossIcon, PinIcon, TrashIcon, AppendIcon, FuseIcon, BoxCheckedIcon, BoxUncheckedIcon, UpdateIcon } from '../Icons';
+import { NotesIcon, TipsIcon, OptionsIcon, ClipboardIcon, VideoIcon, PluginsIcon, MoreAppsIcon, CrossIcon, PinIcon, TrashIcon, AppendIcon, FuseIcon, BoxCheckedIcon, BoxUncheckedIcon, CopyIcon, InternetIcon, IFrameIcon, AppsIcon, TriDownIcon } from '../Icons';
 
 const iconDefaultClass = 'dark:fill-white/60 fill-black/80'
 
@@ -99,60 +99,9 @@ const Dock = () => {
         rubberyMotion,
     } = useMotionVariants();
 
-    const [text1, setText1] = useState('');
-    const [text2, setText2] = useState('');
-    const [similarity, setSimilarity] = useState(0);
-    const [differences, setDifferences] = useState([]);
+    const textAreaRef = useRef(null);
+    const [textAreaValue, setTextAreaValue] = useState('');
 
-    const compareTexts = () => {
-        let longerText = text1.length >= text2.length ? text1 : text2;
-        let shorterText = text1.length < text2.length ? text1 : text2;
-
-        let maxLength = Math.max(text1.length, text2.length);
-        let errors = [];
-
-        let index = 0;
-        let startIndex = -1;
-        let endIndex = -1;
-
-        for (let i = 0; i < maxLength; i++) {
-            if (longerText[i] !== shorterText[i - index]) {
-                if (startIndex === -1) {
-                    startIndex = i;
-                }
-                endIndex = i;
-                index++;
-            } else {
-                if (startIndex !== -1) {
-                    errors.push({
-                        startIndex,
-                        endIndex
-                    });
-                    startIndex = -1;
-                    endIndex = -1;
-                }
-            }
-        }
-
-        if (startIndex !== -1) {
-            errors.push({
-                startIndex,
-                endIndex: maxLength - 1
-            });
-        }
-
-        let differenceTexts = errors.map((error) => {
-            return {
-                text1: text1.slice(error.startIndex, error.endIndex + 1),
-                text2: text2.slice(error.startIndex, error.endIndex + 1),
-            };
-        });
-
-        let similarityScore = (1 - (errors.length / maxLength)) * 100;
-
-        setSimilarity(similarityScore);
-        setDifferences(differenceTexts);
-    };
 
     const handleTextChange = (e, setText) => {
         setText(e.target.value);
@@ -174,9 +123,6 @@ const Dock = () => {
     //     }
     // };
 
-    const handleTextAreaClipboardChange = (event) => {
-        setTextAreaValue(event.target.value);
-    };
     const [isCurrentWindow, setIsCurrentWindow] = useState('');
 
     useEffect(() => {
@@ -212,36 +158,38 @@ const Dock = () => {
     }, [isNotesPinned, isClipboardPinned]);
 
     const [customFileName, setCustomFileName] = useState({ found: false, fileName: '.txt', fileText: '' });
-    const [fileText, setFileText] = useState(currentClipboardText)
 
     useEffect(() => {
-        const regex = /^([\w-]+\.[\w-]+)\s+(.*)$/;
-        const match = fileText.match(regex);
+        const regex = /^(\S+\.\w+)\s+(.*)$/s;
+        const match = textAreaValue.trim().match(regex);
         if (match) {
-            const fileName = match[1];
+            let fileName = match[1];
+            fileName = fileName.replace(/[?\/\\*<>|"]/g, ''); // remove invalid characters
             const fileText = match[2].trim();
-            setCustomFileName({ found: true, fileName, fileText });
-            console.log(fileText);
+            const extension = fileName.split('.').pop();
+            const validExtensionRegex = /^[a-zA-Z0-9]+$/;
+            if (extension.match(validExtensionRegex)) {
+                setCustomFileName({ found: true, fileName, fileText });
+            } else {
+                setCustomFileName({ found: false, fileName: '.txt', fileText: '' });
+            }
         } else {
             setCustomFileName({ found: false, fileName: '.txt', fileText: '' });
         }
-    }, [fileText]);
+    }, [textAreaValue]);
 
-    const handleDownloadClick = (textInput, fileExtension = '.txt', preFileName = '') => {
+    const handleDownloadClick = (textInput, fileExtension = '.txt') => {
         let text = textInput;
-        let fileName = preFileName.trim();
+        let fileName = '';
 
-        const fileExtensionRegex = /^.*\.(.*)$/;
-        const matches = fileExtension.match(fileExtensionRegex);
-
-        if (matches) {
-            fileName = fileExtension.replace(/[?\/\\*<>|"]/g, '');
+        if (customFileName.found) {
+            text = customFileName.fileText;
+            fileName = customFileName.fileName;
+        } else if (fileExtension.lastIndexOf(".") > 0 && fileExtension.lastIndexOf(".") < fileExtension.length - 1
+            && fileExtension.substring(fileExtension.lastIndexOf(".") + 1).length > 0) {
+            fileName = fileExtension.replace(/[?\/\\*<>|"]/g, '').trim();
         } else {
-            fileName = fileName.replace(/[?\/\\*<>|"]/g, '');
-            if (!fileName) {
-                fileName = text.trim().substring(0, 46) + '... ';
-            }
-            fileName += fileExtension;
+            fileName = 'Clipboard - (' + text.replace(/[?\/\\*<>|"]/g, '').trim().substring(0, 68) + ')' + fileExtension;
         }
 
         const blob = new Blob([text], { type: "text/plain" });
@@ -256,6 +204,64 @@ const Dock = () => {
         URL.revokeObjectURL(url);
         document.body.removeChild(a);
     };
+
+    function appendText(text1, text2) {
+        return text1 + "\n\n" + text2;
+    }
+
+    // Function to fuse two texts
+    function fuseText(text1, text2) {
+        let overlap = "";
+        for (let i = 1; i < text1.length; i++) {
+            if (text2.startsWith(text1.slice(i))) {
+                overlap = text1.slice(i);
+            }
+        }
+        return text1 + text2.slice(overlap.length);
+    }
+
+    function compareTexts(text1, text2) {
+        // Calculate Levenshtein distance between the two texts
+        const matrix = [];
+        for (let i = 0; i <= text1.length; i++) {
+            matrix[i] = [i];
+            for (let j = 1; j <= text2.length; j++) {
+                if (i === 0) {
+                    matrix[i][j] = j;
+                } else {
+                    const cost = text1.charAt(i - 1) === text2.charAt(j - 1) ? 0 : 1;
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j] + 1, // deletion
+                        matrix[i][j - 1] + 1, // insertion
+                        matrix[i - 1][j - 1] + cost // substitution
+                    );
+                }
+            }
+        }
+        const distance = matrix[text1.length][text2.length];
+
+        // Check if the two texts are at least 10% similar
+        const similarity = (1 - distance / Math.max(text1.length, text2.length)) * 100;
+        if (similarity < 10) {
+            return '';
+        }
+
+        // Find the biggest difference between the two texts
+        let biggestDiff = '';
+        for (let i = 0; i < text1.length || i < text2.length; i++) {
+            if (text1.charAt(i) !== text2.charAt(i)) {
+                if (text1.charAt(i) === undefined) {
+                    biggestDiff += '+' + text2.charAt(i);
+                } else if (text2.charAt(i) === undefined) {
+                    biggestDiff += '-' + text1.charAt(i);
+                } else {
+                    biggestDiff += text2.charAt(i);
+                }
+            }
+        }
+
+        return biggestDiff;
+    }
 
     // const regexPatterns = [
     //     // { name: "jsxTest", pattern: /(import\s+\*\s+as\s+React\s+from\s+'react')|(import\s+React,\s*\{\s*(useState|useEffect|useContext|useCallback|useMemo|useRef|useReducer)\s*\}\s*from\s+'react')|(import\s+\{\s*(useState|useEffect|useContext|useCallback|useMemo|useRef|useReducer)\s*\}\s+from\s+'react')|(export\s+default\s)|(<\s*[a-zA-Z]+\s*(\S*\s*=\s*".*?"\s*)*\/?\s*>)/ },
@@ -422,10 +428,10 @@ const Dock = () => {
     function isJsCode(code) {
         // Regular expression to match valid JavaScript code
         const jsRegex = /^\s*(?:var|let|const|\(|function|class|if|else|switch|case|default|for|while|do|try|catch|finally|throw|new|return|typeof|instanceof|void|delete|async|await|\+|-|\*|\/|%|&|\||\^|!|~|<<|>>|>>>|===|!==|==|!=|<=|>=|<|>|&&|\|\||\?|:|,|;|\{|\}|\[|\]|\(|\)|=|\.)+\s*$/;
-      
+
         return jsRegex.test(code);
-      }
-      
+    }
+
 
     function isPyCode(code) {
         const hasPythonImport = /^import\s+\w+/.test(code);
@@ -442,8 +448,9 @@ const Dock = () => {
     }
 
     function isCSVCode(code) {
-        return /(?:\w+,)+\w+/.test(code);
-    }
+        const regex = /^(("[^"]*("|$)|[^,"]*)(,|$))+/;
+        return regex.test(code);
+    }    
 
     function isHtmlCode(code) {
         const htmlTagsRegex = /<\s*(\w+)[^>]*>(.*?)<\s*\/\s*\1\s*>/;
@@ -506,7 +513,7 @@ const Dock = () => {
     function isYamlCode(code) {
         const yamlRegex = /^\s*(?:-.*|\w+(?:\s*:\s*.+)?)\s*$/gm;
         return yamlRegex.test(code);
-      }      
+    }
 
     function isShCode(code) {
         const hasShebang = /^#!\s*\/(bin|usr\/bin|usr\/local\/bin)\/(sh|bash)\s*$/.test(code);
@@ -538,8 +545,6 @@ const Dock = () => {
 
     function detectCodeType(code) {
         let extensions = [];
-
-        let logicWeights = {}  
 
         if (isReactCode(code)) {
             if (/export\s+default\s+([^\s;]+)/.test(code)) {
@@ -622,6 +627,7 @@ const Dock = () => {
 
     const clearHistory = () => {
         setClipboardTextHistory([currentClipboardText])
+        localStorage.removeItem('clipboardText');
     }
 
     const [isAppending, setIsAppending] = useState(false)
@@ -630,19 +636,58 @@ const Dock = () => {
     useEffect(() => {
         !isClipboardVisible || !isClipboardPinned ? setIsAppending(false) & setIsFusing(false) : setIsAppending(isAppending) & setIsFusing(isFusing);
         isClipboardVisible && setTextAreaValue(currentClipboardText);
-    }, [isClipboardVisible, isClipboardPinned])
-
-    const textAreaRef = useRef(null);
-
-    const [textAreaValue, setTextAreaValue] = useState('');
+    }, [isClipboardVisible])
 
     const handleTextAreaChange = (event) => {
         setTextAreaValue(event.target.value);
     };
 
     useEffect(() => {
-        setTextAreaValue(currentClipboardText)
+        !isAppending && !isFusing && setTextAreaValue(currentClipboardText)
     }, [currentClipboardText])
+
+    // const TextMotion = {
+    //     rest: {
+    //       x: '-26px',
+    //       transition: { type: 'spring', restDelta: 0.001, ...smoothMotion }
+    //     },
+    //     hover: {
+    //       x: 0,
+    //       transition: { type: 'spring', restDelta: 0.001, ...smoothMotion }
+    //     }
+    //   };
+
+    //   const CheckboxMotion = {
+    //     rest: { scale: 0.6, opacity: 0, transition: { type: 'spring', restDelta: 0.001, ...smoothMotion } },
+    //     hover: {
+    //     scale: 1,
+    //     opacity: 1,
+    //       transition: { type: 'spring', restDelta: 0.001, ...smoothMotion }
+    //     }
+    //   };
+
+    /* -------------------------------- DISABLED -------------------------------- */
+
+    const TextMotion = {
+        rest: {
+            x: '-26px',
+            transition: { type: 'spring', restDelta: 0.001, ...smoothMotion }
+        },
+        hover: {
+            x: '-26px',
+            transition: { type: 'spring', restDelta: 0.001, ...smoothMotion }
+        }
+    };
+
+    const CheckboxMotion = {
+        rest: { scale: 0.6, opacity: 0, transition: { type: 'spring', restDelta: 0.001, ...smoothMotion } },
+        hover: {
+            scale: 0.6, opacity: 0,
+            transition: { type: 'spring', restDelta: 0.001, ...smoothMotion }
+        }
+    };
+
+    const [isHistoryEnabled, setIsHistoryEnabled] = useState(true);
 
     return (
         <>
@@ -658,15 +703,7 @@ const Dock = () => {
                     id='dock-container' className='flex flex-row h-24 items-center justify-center border-highlight border-[1px] border-black/20 dark:border-white/5 space-x-4 p-4 backdrop-blur-xl rounded-[2.3rem] shadow-lg bg-neutral-100/60 dark:bg-neutral-800/80' style={{ pointerEvents: 'auto' }}>
 
                     <div onClick={() => !isNotesPinned ? setIsNotesVisible(!isNotesVisible) & setIsCurrentWindow('notes') : setIsCurrentWindow('notes')}>
-                        <Tooltip
-                            tooltipContent={() => (
-                                <>
-                                    <span>Notes</span>
-                                </>
-                            )}
-                        >
-                            <DockIconContainer><NotesIcon className={iconDefaultClass} /></DockIconContainer>
-                        </Tooltip>
+                        <DockIconContainer><NotesIcon className={iconDefaultClass} /></DockIconContainer>
                     </div>
 
                     <div onClick={() => !isClipboardPinned ? setIsClipboardVisible(!isClipboardVisible) & setIsCurrentWindow('clipboard') : setIsCurrentWindow('clipboard')} onDragOver={(event) => {
@@ -676,18 +713,9 @@ const Dock = () => {
                             const text = event.dataTransfer.getData("text/plain");
                             updateClipboardText(text);
                             navigator.clipboard.writeText(text);
-                            setTextAreaValue(text);
                             setIsClipboardVisible(true);
                         }}>
-                        <Tooltip
-                            tooltipContent={() => (
-                                <>
-                                    <span>Clipboard</span>
-                                </>
-                            )}
-                        >
-                            <DockIconContainer><ClipboardIcon className={iconDefaultClass} /></DockIconContainer>
-                        </Tooltip>
+                        <DockIconContainer><ClipboardIcon className={iconDefaultClass} /></DockIconContainer>
                     </div>
 
                     {/* <div>
@@ -712,15 +740,7 @@ const Dock = () => {
                     <DockSeparator />
 
                     <div onClick={() => setIsOptionsVisible(!isOptionsVisible) & setIsCurrentWindow('options')} className='flex flex-col justify-center items-center'>
-                        <Tooltip
-                            tooltipContent={() => (
-                                <>
-                                    <span>Options</span>
-                                </>
-                            )}
-                        >
-                            <DockIconContainer><OptionsIcon className={iconDefaultClass} /></DockIconContainer>
-                        </Tooltip>
+                        <DockIconContainer><OptionsIcon className={iconDefaultClass} /></DockIconContainer>
                     </div>
 
                     {/* <Tooltip
@@ -738,7 +758,7 @@ const Dock = () => {
 
             <container onClick={() => isCurrentWindow !== 'notes' && setIsCurrentWindow('notes')}>
                 <WindowDiv windowVisible={isNotesVisible ? true : false} windowIndex={isCurrentWindow === 'notes' ? 999 : (isNotesVisible && !isNotesPinned ? 99 : 9)}>
-                    <div className='flex flex-row items-center justify-between' >
+                    <div className='flex flex-row items-center justify-between pointer pointer-events-none' >
                         <span className='text-2xl text-neutral-600 dark:text-neutral-400 flex flex-row w-fit items-center justify-center select-none bottom-0 font-default-light'>
                             <NotesIcon height='24px' className='fill-neutral-600 dark:fill-neutral-400 mr-4' />Notes
                             <motion.div
@@ -749,7 +769,7 @@ const Dock = () => {
                                     ...smoothMotion,
                                 }}
                                 onClick={() => setIsNotesPinned(!isNotesPinned)}
-                                className='h-[32px] ml-4 px-4 py-2 rounded-full bg-black/5 dark:bg-white/5 cursor-pointer outline-none flex flex-row justify-center items-center text-lg text-neutral-600 dark:text-neutral-400 select-none'>
+                                className='pointer-events-auto h-[32px] ml-4 px-4 py-2 rounded-full bg-black/5 dark:bg-white/5 cursor-pointer outline-none flex flex-row justify-center items-center text-lg text-neutral-600 dark:text-neutral-400 select-none'>
                                 <motion.div transition={{ type: "spring", restDelta: 0.001, ...smoothMotion, }} animate={isNotesPinned ? { rotate: 45, marginTop: '0.5rem', marginRight: '0.3rem' } : { rotate: 0 }}><PinIcon height="16px" className='fill-neutral-600 dark:fill-neutral-400 mr-2' /></motion.div>
                                 <span>{isNotesPinned ? 'Unpin' : 'Pin'}</span>
                             </motion.div>
@@ -765,7 +785,7 @@ const Dock = () => {
                             <PinIcon height="auto" className='fill-neutral-600 dark:fill-neutral-400 mr-2' />
                             <span>Pin</span>
                         </motion.div> */}
-                        {!isNotesPinned && <span onClick={() => setIsNotesVisible(!isNotesVisible)} className='space-x-2 text-xl text-neutral-600 dark:text-neutral-400 flex flex-row w-fit items-center justify-center select-none bottom-0 font-default-light'>
+                        {!isNotesPinned && <span onClick={() => setIsNotesVisible(!isNotesVisible)} className='pointer-events-auto space-x-2 text-xl text-neutral-600 dark:text-neutral-400 flex flex-row w-fit items-center justify-center select-none bottom-0 font-default-light'>
                             <motion.div
                                 whileTap={{ scale: 0.8 }}
                                 transition={{
@@ -785,7 +805,7 @@ const Dock = () => {
 
             <container className='relative' onClick={() => isCurrentWindow !== 'clipboard' && setIsCurrentWindow('clipboard')}>
                 <WindowDiv windowVisible={isClipboardVisible ? true : false} windowIndex={isCurrentWindow === 'clipboard' ? 999 : (isClipboardVisible && !isClipboardPinned ? 99 : 9)}>
-                    <div className='flex flex-row items-center justify-between'>
+                    <div className='flex flex-row items-center justify-between pointer-events-none'>
                         <span className='text-2xl text-neutral-600 dark:text-neutral-400 flex flex-row w-fit items-center justify-center select-none bottom-0 font-default-light'>
                             <ClipboardIcon height='24px' className='fill-neutral-600 dark:fill-neutral-400 mr-4' />Clipboard
                             <motion.div
@@ -796,12 +816,12 @@ const Dock = () => {
                                     ...smoothMotion,
                                 }}
                                 onClick={() => setIsClipboardPinned(!isClipboardPinned)}
-                                className='h-[32px] ml-4 px-4 py-2 rounded-full bg-black/5 dark:bg-white/5 cursor-pointer outline-none flex flex-row justify-center items-center text-lg text-neutral-600 dark:text-neutral-400 select-none'>
+                                className='pointer-events-auto h-[32px] ml-4 px-4 py-2 rounded-full bg-black/5 dark:bg-white/5 cursor-pointer outline-none flex flex-row justify-center items-center text-lg text-neutral-600 dark:text-neutral-400 select-none'>
                                 <motion.div transition={{ type: "spring", restDelta: 0.001, ...smoothMotion, }} animate={isClipboardPinned ? { rotate: 45, marginTop: '0.5rem', marginRight: '0.3rem' } : { rotate: 0 }}><PinIcon height="16px" className='fill-neutral-600 dark:fill-neutral-400 mr-2' /></motion.div>
                                 <span>{isClipboardPinned ? 'Unpin' : 'Pin'}</span>
                             </motion.div>
                         </span>
-                        {!isClipboardPinned && <span onClick={() => setIsClipboardVisible(!isClipboardVisible)} className='space-x-2 text-xl text-neutral-600 dark:text-neutral-400 flex flex-row w-fit items-center justify-center select-none bottom-0 font-default-light'>
+                        {!isClipboardPinned && <span onClick={() => setIsClipboardVisible(!isClipboardVisible)} className='pointer-events-auto space-x-2 text-xl text-neutral-600 dark:text-neutral-400 flex flex-row w-fit items-center justify-center select-none bottom-0 font-default-light'>
                             <motion.div
                                 whileTap={{ scale: 0.8 }}
                                 transition={{
@@ -816,34 +836,36 @@ const Dock = () => {
                     </div>
 
                     <div className=' flex flex-row space-x-4 w-full h-[-webkit-fill-available] mt-4 mb-8 text-lg'>
-                        <pre className='w-full h-full shrink-0 md:w-2/3'><textarea ref={textAreaRef} value={textAreaValue} onChange={handleTextAreaChange} onMouseLeave={(event) => handleTextAreaClipboardChange(event)} className='font-default-regular p-4 w-full rounded-xl text-neutral-600 dark:text-neutral-500 bg-black/5 dark:bg-white/[0.03] h-full overflow-y-scroll hide-scroll outline-none whitespace-pre-wrap break-words overflow-wrap-break-word'></textarea></pre>
+                        <pre className='w-full h-full shrink-0 md:w-2/3'><textarea ref={textAreaRef} value={textAreaValue} onChange={handleTextAreaChange} className='font-default-regular p-4 w-full rounded-xl text-neutral-600 dark:text-neutral-500 bg-black/5 dark:bg-white/[0.03] h-full overflow-y-scroll hide-scroll outline-none whitespace-pre-wrap break-words overflow-wrap-break-word'></textarea></pre>
                         <div className='flex flex-col space-y-4 w-[-webkit-fill-available]'>
-                            <span className='text-xl text-neutral-600 dark:text-neutral-400 select-none flex flex-row space-x-4 justify-between items-center'>History{clipboardTextHistory.length > 1 && <motion.span initial={{ translateX: '20%' }} animate={{ translateX: '0' }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.95 }} className='flex flex-row justify-center items-center px-3 py-1 rounded-xl bg-black/5 dark:bg-white/[0.03] text-sm cursor-pointer text-neutral-400 dark:text-neutral-600 outline-none' onClick={() => clearHistory()}>Clear</motion.span>}</span>
-                            {clipboardTextHistory.length <= 1 && <span className='rounded-xl bg-black/5 dark:bg-white/[0.03] px-2 py-1 text-neutral-600/40 dark:text-neutral-400/10 flex flex-row justify-center items-center select-none h-[5.32rem] text-center'>Make changes<br />to enable history</span>}
+                            <span className='text-xl text-neutral-600 dark:text-neutral-400 select-none flex flex-row space-x-4 justify-between items-center'>
+                                <motion.div layout={{ type: "position" }} onClick={() => setIsHistoryEnabled(!isHistoryEnabled)} className='flex justify-center items-baseline flex-row' initial="rest" whileHover="hover" animate="rest"><motion.div variants={CheckboxMotion}>{isHistoryEnabled ? <BoxCheckedIcon height='16px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' /> : <BoxUncheckedIcon height='16px' className='mr-2 fill-neutral-600/40 dark:fill-neutral-400/40' />}</motion.div><motion.div variants={TextMotion}>History</motion.div></motion.div>{clipboardTextHistory.length > 1 && <motion.span initial={{ translateX: '20%' }} animate={{ translateX: '0' }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.95 }} className='flex flex-row justify-center items-center px-3 py-1 rounded-xl bg-black/5 dark:bg-white/[0.03] text-sm cursor-pointer text-neutral-600 dark:text-neutral-400 outline-none' onClick={() => clearHistory()}>Clear All</motion.span>}</span>
+                            {clipboardTextHistory.length <= 1 && <motion.span layout={{ type: "position" }} initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} className='rounded-xl bg-black/5 dark:bg-white/[0.03] px-2 py-1 text-neutral-600/60 text-base dark:text-neutral-400/20 flex flex-row justify-center items-center select-none h-[5.32rem] text-center'>Make changes<br />to enable history</motion.span>}
                             {clipboardTextHistory.length > 1 && <ul className='text-base text-neutral-500 select-none overflow-y-scroll hide-scroll space-y-4 rounded-xl max-h-[43%]'>
                                 {clipboardTextHistory.map((text, index) => (
-                                    index > 0 && <div className='relative group'><motion.li key={index} onClick={() => updateClipboardText(text) & setTextAreaValue(text)} initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='rounded-xl outline-none h-[5.32rem] overflow-hidden bg-black/5 dark:bg-white/[0.03] px-4 py-2 cursor-pointer' style={{ overflowWrap: 'anywhere' }}>
-                                        {index + '. ' + text}
+                                    index > 0 && <div className='relative group'><motion.li layout={{ type: "position" }} key={index} onClick={() => updateClipboardText(text) & navigator.clipboard.writeText(textAreaValue) & setTextAreaValue(text)} initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='rounded-xl outline-none h-[5.32rem] overflow-hidden bg-black/5 dark:bg-white/[0.03] px-4 py-2 cursor-pointer' style={{ overflowWrap: 'anywhere' }}>
+                                        {text}
                                     </motion.li>
                                         {/* <button className='p-2 h-8 w-8 rounded-lg absolute top-2 right-2 flex-row flex items-center justify-center transition-all ease-in-out duration-300 scale-75 opacity-0 group-hover:opacity-100 group-hover:scale-100 active:scale-75 outline-none' onClick={() => deleteClipboardTextHistory(index)}><TrashIcon className='fill-neutral-400 dark:fill-neutral-600' /></button> */}
                                     </div>
                                 ))}
                             </ul>}
                             <div className='flex flex-col space-y-4 '>
-                                <span className='text-xl text-neutral-600 dark:text-neutral-400 select-none'>Actions</span>
+                                <motion.span layout={{ type: "position" }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} className='text-xl text-neutral-600 dark:text-neutral-400 select-none'>Actions</motion.span>
                                 <div className='flex flex-wrap -m-1'>
-                                    <motion.button onClick={() => updateClipboardText(textAreaValue) & navigator.clipboard.writeText(textAreaValue)} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='outline-none w-fit px-3 py-1 text-neutral-600 dark:text-neutral-500 rounded-xl bg-black/10 dark:bg-white/[0.03] text-base m-1 select-none flex flex-row justify-center items-center'><UpdateIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Update</motion.button>
-                                    <motion.button onClick={() => isAppending ? setIsAppending(false) : setIsAppending(true) & setIsFusing(false)} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='outline-none w-fit px-3 py-1 text-neutral-600 dark:text-neutral-500 rounded-xl bg-black/10 dark:bg-white/[0.03] text-base m-1 select-none flex flex-row justify-center items-center'>{isAppending ? <><BoxCheckedIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Appending</> : <><AppendIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Append</>}</motion.button>
-                                    <motion.button onClick={() => isFusing ? setIsFusing(false) : setIsFusing(true) & setIsAppending(false)} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='outline-none w-fit px-3 py-1 text-neutral-600 dark:text-neutral-500 rounded-xl bg-black/10 dark:bg-white/[0.03] text-base m-1 select-none flex flex-row justify-center items-center outline-none'>{isFusing ? <><BoxCheckedIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Fusing</> : <><FuseIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Fuse</>}</motion.button>
-                                    <motion.button onClick={() => !isNotesPinned ? setIsNotesVisible(!isNotesVisible) & setIsCurrentWindow('notes') : setIsCurrentWindow('notes')} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='outline-none w-fit px-3 py-1 text-neutral-600 dark:text-neutral-500 rounded-xl bg-black/10 dark:bg-white/[0.03] text-base m-1 select-none flex flex-row justify-center items-center'><NotesIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Note</motion.button>
-                                    <motion.button onClick={() => handleDownloadClick(textAreaValue)} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='outline-none w-fit px-3 py-1 text-neutral-600 dark:text-neutral-500 rounded-xl bg-black/10 dark:bg-white/[0.03] text-base m-1 select-none'>Download as {customFileName.found ? customFileName.fileName : '.txt'}</motion.button>
-                                    {textAreaValue.trim() !== '' &&
+                                    <motion.button layout={{ type: "position" }} onClick={() => isAppending ? setIsAppending(false) : setIsAppending(true) & setIsFusing(false)} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='outline-none w-fit px-3 py-1 text-neutral-600 dark:text-neutral-500 rounded-xl bg-black/10 dark:bg-white/[0.03] text-base m-1 select-none flex flex-row justify-center items-center'>{isAppending ? <><BoxCheckedIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Appending</> : <><AppendIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Append</>}</motion.button>
+                                    <motion.button layout={{ type: "position" }} onClick={() => isFusing ? setIsFusing(false) : setIsFusing(true) & setIsAppending(false)} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='outline-none w-fit px-3 py-1 text-neutral-600 dark:text-neutral-500 rounded-xl bg-black/10 dark:bg-white/[0.03] text-base m-1 select-none flex flex-row justify-center items-center'>{isFusing ? <><BoxCheckedIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Fusing</> : <><FuseIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Fuse</>}</motion.button>
+                                    <motion.button layout={{ type: "position" }} onClick={() => !isNotesPinned ? setIsNotesVisible(!isNotesVisible) & setIsCurrentWindow('notes') : setIsCurrentWindow('notes')} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='outline-none w-fit px-3 py-1 text-neutral-600 dark:text-neutral-500 rounded-xl bg-black/10 dark:bg-white/[0.03] text-base m-1 select-none flex flex-row justify-center items-center'><NotesIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Note</motion.button>
+                                    <motion.button layout={{ type: "position" }} onClick={() => handleDownloadClick(textAreaValue)} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='outline-none w-fit px-3 py-1 text-neutral-600 dark:text-neutral-500 rounded-xl bg-black/10 dark:bg-white/[0.03] text-base m-1 select-none'>Save as {customFileName.found ? (customFileName.fileName.length > 14 ? '...' : '') + customFileName.fileName.substring(customFileName.fileName.length - 14) : '.txt'}</motion.button>
+                                    {customFileName.found && !customFileName.fileName.endsWith('.txt') && <motion.button layout={{ type: "position" }} onClick={() => handleDownloadClick(textAreaValue, '.txt')} initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='outline-none w-fit px-3 py-1 text-neutral-600 dark:text-neutral-500 rounded-xl bg-black/10 dark:bg-white/[0.03] text-base m-1 select-none'>.txt</motion.button>}
+                                    {textAreaValue.trim() !== '' && !customFileName.found &&
                                         detectCodeType(textAreaValue).map((type, index) => (
-                                            <motion.button key={index} onClick={() => handleDownloadClick(textAreaValue, type)} initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='w-fit px-3 py-1 bg-black/10 dark:bg-white/[0.03] text-neutral-600 dark:text-neutral-500 rounded-xl text-base m-1 select-none outline-none'>
-                                                {type}
+                                            <motion.button layout={{ type: "position" }} key={index} onClick={() => handleDownloadClick(textAreaValue, type)} initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='w-fit px-3 py-1 bg-black/10 dark:bg-white/[0.03] text-neutral-600 dark:text-neutral-500 rounded-xl text-base m-1 select-none outline-none'>
+                                                {(type.length > 14 ? '...' : '') + type.substring(type.length - 14).replace(/[?\/\\*<>|"]/g, '')}
                                             </motion.button>
                                         ))
                                     }
+                                    {currentClipboardText.trim() !== textAreaValue.trim() && textAreaValue.trim() !== '' && <motion.button layout={{ type: "position" }} onClick={() => updateClipboardText(textAreaValue) & navigator.clipboard.writeText(textAreaValue)} initial={{ scale: 0.8 }} animate={{ scale: 1 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='outline-none w-fit px-3 py-1 text-neutral-600 dark:text-neutral-500 rounded-xl bg-black/10 dark:bg-white/[0.03] text-base m-1 select-none flex flex-row justify-center items-center'><CopyIcon height='14px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' />Copy changes</motion.button>}
                                 </div>
                             </div>
                         </div>
@@ -853,7 +875,7 @@ const Dock = () => {
 
             <container onClick={() => isCurrentWindow !== 'options' && setIsCurrentWindow('options')}>
                 <WindowDiv windowVisible={isOptionsVisible ? true : false} windowIndex={isCurrentWindow === 'options' ? 999 : (isOptionsVisible ? 99 : 9)}>
-                    <div className='flex flex-row items-center justify-between' >
+                    <div className='flex flex-row items-center justify-between pointer-events-none' >
                         <span className='text-2xl text-neutral-600 dark:text-neutral-400 flex flex-row w-fit items-center justify-center select-none bottom-0 font-default-regular'>
                             <OptionsIcon height='24px' className='fill-neutral-600 dark:fill-neutral-400 mr-4' />Options</span>
                         {/* <motion.div
@@ -867,7 +889,7 @@ const Dock = () => {
                             <PinIcon height="auto" className='fill-neutral-600 dark:fill-neutral-400 mr-2' />
                             <span>Pin</span>
                         </motion.div> */}
-                        <span onClick={() => setIsOptionsVisible(!isOptionsVisible)} className='space-x-2 text-xl text-neutral-600 dark:text-neutral-400 flex flex-row w-fit items-center justify-center select-none bottom-0 font-default-light'>
+                        <span onClick={() => setIsOptionsVisible(!isOptionsVisible)} className='pointer-events-auto space-x-2 text-xl text-neutral-600 dark:text-neutral-400 flex flex-row w-fit items-center justify-center select-none bottom-0 font-default-light'>
                             <motion.div
                                 whileTap={{ scale: 0.8 }}
                                 transition={{

@@ -51,7 +51,6 @@ const Newtab = (props) => {
 
   const { isSm, isMd, isLg, isXl, is2xl } = useMediaQuery();
 
-
   const DelayedClipboard = withDelay(LazyClipboard, 600);
   const DelayedSearchBar = withDelay(LazySearchBar, 0);
   const DelayedDock = withDelay(LazyDock, 300);

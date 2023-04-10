@@ -27,6 +27,8 @@ export const ClipboardProvider = ({ children }) => {
     }
   }, []);
 
+  console.log(clipboardTextHistory)
+
   const updateClipboardText = (newText) => {
     if (newText.trim() === '') {
       // Do not insert if the clipboard text only contains spaces
@@ -35,7 +37,7 @@ export const ClipboardProvider = ({ children }) => {
 
     const newClipboardTextHistory = [...clipboardTextHistory];
 
-    // If the newText already exists in the clipboardTextHistory array, move it to the front
+    // Remove any duplicates before adding the new text to the front of the array
     const existingIndex = newClipboardTextHistory.indexOf(newText);
     if (existingIndex !== -1) {
       newClipboardTextHistory.splice(existingIndex, 1);

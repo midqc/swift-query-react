@@ -58,6 +58,11 @@ let defaultShortcuts = [
     url: 'https://drive.google.com/drive/u/0/search?q=',
     info: 'search google drive',
   },
+  {
+    name: '-wa',
+    url: 'https://www.wolframalpha.com/input/?i=',
+    info: 'wolfram alpha',
+  },
 ];
 
 const defaultLinks = [
@@ -283,7 +288,7 @@ const SearchBar = () => {
           } else {
             openLink(
               matchingCommand.url,
-              searchValue.slice(nameLength),
+              encodeURIComponent(searchValue.slice(nameLength)),
               isNewTab
             );
           }
@@ -553,8 +558,11 @@ const SearchBar = () => {
             {word}
           </span>
         ))}
+        <span>&nbsp;&nbsp;</span>
       </div>
     );
+ight-container    
+    
   };
 
   const renderSuggestionText = (nameArray, suggestions) => {
@@ -698,6 +706,7 @@ const SearchBar = () => {
                       msOverflowStyle: 'none',
                       scrollbarWidth: 'none',
                       whiteSpace: 'pre-wrap',
+                      borderRadius: '28px',
                     }}
                     className="bg-transparent focus:outline-none select-none pointer-events-none px-5 py-[0.625rem] text-[2.5rem] font-default-light  text-black dark:text-white"
                     onScroll={handleHighlightScroll}

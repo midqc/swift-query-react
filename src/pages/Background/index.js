@@ -13,16 +13,12 @@ function sendMessage(message) {
   })
     .then((response) => {
       if (!response.ok) {
-        throw new Error('Network response was not ok');
       }
       return response.text();
     })
     .then((data) => {
-      console.log('Message sent:', message);
-      console.log('Server response:', data);
     })
     .catch((error) => {
-      console.error('There was a problem with the fetch operation:', error);
     });
 }
 
@@ -30,12 +26,9 @@ function getBrowsers() {
   fetch(browsersUrl)
     .then((response) => response.json())
     .then((data) => {
-      // console.log('Browsers:', data);
-      // Store the fetched data in the Chrome local storage
       chrome.storage.local.set({ browserData: data }, () => {});
     })
     .catch((error) => {
-      console.error('There was a problem fetching the browsers data:', error);
     });
 }
 
@@ -63,6 +56,11 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     return true;
   } else if (request.message.startsWith('.')) {
     sendMessage(request.message);
+    return true;
+  } else if(request.message === 'getClipboard') {
+    chrome.clipboard.readText(function(clipboardText) {
+      sendResponse(clipboardText);
+    });
     return true;
   }
 });

@@ -24,13 +24,13 @@ const Tooltip = ({ tooltipContent, children }) => {
   const getPositionStyle = (element) => {
     const elementRect = element.getBoundingClientRect();
     const tooltipRect = tooltipRef.current.getBoundingClientRect();
-    let top = elementRect.top - tooltipRect.height;
-    let left = elementRect.left + elementRect.width / 2 - tooltipRect.width / 2;
-    
+    let top = elementRect.top - tooltipRect.height - 10;
+    let left = elementRect.left + (elementRect.width / 2) - (tooltipRect.width / 2);
+  
     // Check if the tooltip overflows the body
     const bodyRect = document.body.getBoundingClientRect();
     if (tooltipRect.bottom > bodyRect.bottom) {
-      top = elementRect.top - tooltipRect.height - elementRect.height;
+      top = elementRect.top - tooltipRect.height - elementRect.height - 10;
     }
     if (tooltipRect.right > bodyRect.right) {
       left = elementRect.right - tooltipRect.width;
@@ -38,9 +38,10 @@ const Tooltip = ({ tooltipContent, children }) => {
     if (tooltipRect.left < bodyRect.left) {
       left = elementRect.left;
     }
-    
+  
     return { top, left };
   };
+  
   
 
   const getOverflowStyle = (tooltipRect) => {
@@ -82,7 +83,7 @@ const Tooltip = ({ tooltipContent, children }) => {
     <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} style={{ position: 'relative' }}>
       {React.cloneElement(children, { ref: parentRef })}
       {showTooltip && (
-        <div ref={tooltipRef} className="px-2 py-1 my-8 text-base select-none text-neutral-600 bg-neutral-200 dark:text-neutral-600 dark:bg-neutral-800 rounded-xl z-[9999] absolute shadow-lg" style={{ position: 'absolute' }}>
+        <div ref={tooltipRef} className="px-2 py-1 m-1 text-base select-none text-neutral-600 bg-neutral-200 dark:text-neutral-600 dark:bg-neutral-800 rounded-xl z-[9999] absolute" style={{ position: 'absolute' }}>
           {tooltipContent()}
         </div>
       )}

@@ -8,6 +8,8 @@ import { delay, motion, MotionConfig, useAnimation } from 'framer-motion';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useMotionVariants } from '../../hooks/useMotionVariants';
 
+import RandomPosition from '../ui/RandomPosition';
+
 import { GlobeIcon, TrashIcon, VideoIcon } from '../Icons'
 
 function Clipboard() {
@@ -25,6 +27,8 @@ function Clipboard() {
 
   const [isEditableFocused, setIsEditableFocused] = useState(false);
   const [isParentHovered, setIsParentHovered] = useState(false);
+
+  const [liveLinks, setLiveLinks] = useState('');
 
   const handleParentHoverStart = () => {
     childControls.start("hover");
@@ -106,8 +110,6 @@ function Clipboard() {
     };
   }, []);
 
-
-
   function handleClick() {
   }
 
@@ -145,8 +147,8 @@ function Clipboard() {
   };
 
   const [titles, setTitles] = useState({});
-  // const youtubeApiKey = 'AIzaSyDgFa2LO6IVENx50Xi-mxc07THnEe-vFmI';
-  const youtubeApiKey = '';
+  const youtubeApiKey = 'AIzaSyDgFa2LO6IVENx50Xi-mxc07THnEe-vFmI';
+  // const youtubeApiKey = '';
 
   useEffect(() => {
     links.forEach(url => {
@@ -191,71 +193,71 @@ function Clipboard() {
 
   const linkCount = links.length;
 
-  const linkList = links.map((item, index) => {
-    if (item.includes('youtube.com/watch')) {
-      return (
-        <motion.li
-          whileTap={{ scale: 0.9 }}
-          transition={{
-            type: 'spring',
-            restDelta: 0.001,
-            ...smoothMotion,
-          }}
-          className='select-none text-ellipsis overflow-hidden max-w-[16rem] w-full h-fit whitespace-nowrap bg-red-600/10 dark:bg-red-400/5 text-red-600 dark:text-red-500 px-2 py-1 rounded-[0.8rem] flex'
-          key={index}
-        >
-          <span className='flex items-center space-x-2'>
-            {linkCount <= 3 ? <VideoIcon height='16px' className='fill-red-600 dark:fill-red-500' /> : ''}
-            {Object.keys(titles).length && titles[item]
-              ? linkCount > 3
-                ? (
-                  <a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '15.5rem', overflow: 'hidden' }}>
-                    {index + 1 + '. '}{titles[item]}
-                  </a>
-                ) : (
-                  <a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '13rem', overflow: 'hidden' }}>
-                    {titles[item]}
-                  </a>
-                )
-              : linkCount > 3
-                ? (
-                  <a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '15.5rem', overflow: 'hidden' }}>
-                    {index + 1 + '. '}{`YouTube/${item.replace(/^https?:\/\/www.youtube.com\/watch\?v=/, '')}`}
-                  </a>
-                ) : (
-                  <a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '13rem', overflow: 'hidden' }}>
-                    {`YouTube/${item.replace(/^https?:\/\/www.youtube.com\/watch\?v=/, '')}`}
-                  </a>
-                )
-            }
-          </span>
-        </motion.li>
-      );
-    } else {
-      return (
-        <motion.li
-          whileTap={{ scale: 0.9 }}
-          transition={{
-            type: 'spring',
-            restDelta: 0.001,
-            ...smoothMotion,
-          }}
-          className='select-none text-ellipsis overflow-hidden max-w-[16rem] w-full h-fit whitespace-nowrap bg-blue-600/10 dark:bg-blue-400/5 text-blue-600 dark:text-blue-500 px-2 py-1 rounded-[0.8rem] flex'
-          key={index}
-        >
-          <span className='flex items-center space-x-2'>
-            {linkCount <= 3 ? <GlobeIcon height='16px' className='fill-blue-600 dark:fill-blue-500' /> : ''}
-            {linkCount > 3
-              ? (<a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '15rem', overflow: 'hidden' }}>
-                {index + 1 + '. '}{trimSimilar(links[index - 1], item).replace(/^https?:\/\/www./, '').replace(/^https?:\/\//, '')}
-              </a>) : (<a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '13.5rem', overflow: 'hidden' }}>
-                {trimSimilar(links[index - 1], item).replace(/^https?:\/\/www./, '').replace(/^https?:\/\//, '')}
-              </a>)}
-          </span>
-        </motion.li>
-      );
-    }
-  });
+  // const linkList = links.map((item, index) => {
+  //   if (item.includes('youtube.com/watch')) {
+  //     return (
+  //       <motion.li
+  //         whileTap={{ scale: 0.9 }}
+  //         transition={{
+  //           type: 'spring',
+  //           restDelta: 0.001,
+  //           ...smoothMotion,
+  //         }}
+  //         className='select-none text-ellipsis overflow-hidden max-w-[16rem] w-full h-fit whitespace-nowrap bg-red-600/10 dark:bg-red-400/5 text-red-600 dark:text-red-500 px-2 py-1 rounded-[0.8rem] flex'
+  //         key={index}
+  //       >
+  //         <span className='flex items-center space-x-2'>
+  //           {linkCount <= 3 ? <VideoIcon height='16px' className='fill-red-600 dark:fill-red-500' /> : ''}
+  //           {Object.keys(titles).length && titles[item]
+  //             ? linkCount > 3
+  //               ? (
+  //                 <a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '15.5rem', overflow: 'hidden' }}>
+  //                   {index + 1 + '. '}{titles[item]}
+  //                 </a>
+  //               ) : (
+  //                 <a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '13rem', overflow: 'hidden' }}>
+  //                   {titles[item]}
+  //                 </a>
+  //               )
+  //             : linkCount > 3
+  //               ? (
+  //                 <a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '15.5rem', overflow: 'hidden' }}>
+  //                   {index + 1 + '. '}{`YouTube/${item.replace(/^https?:\/\/www.youtube.com\/watch\?v=/, '')}`}
+  //                 </a>
+  //               ) : (
+  //                 <a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '13rem', overflow: 'hidden' }}>
+  //                   {`YouTube/${item.replace(/^https?:\/\/www.youtube.com\/watch\?v=/, '')}`}
+  //                 </a>
+  //               )
+  //           }
+  //         </span>
+  //       </motion.li>
+  //     );
+  //   } else {
+  //     return (
+  //       <motion.li
+  //         whileTap={{ scale: 0.9 }}
+  //         transition={{
+  //           type: 'spring',
+  //           restDelta: 0.001,
+  //           ...smoothMotion,
+  //         }}
+  //         className='select-none text-ellipsis overflow-hidden max-w-[16rem] w-full h-fit whitespace-nowrap bg-blue-600/10 dark:bg-blue-400/5 text-blue-600 dark:text-blue-500 px-2 py-1 rounded-[0.8rem] flex'
+  //         key={index}
+  //       >
+  //         <span className='flex items-center space-x-2'>
+  //           {linkCount <= 3 ? <GlobeIcon height='16px' className='fill-blue-600 dark:fill-blue-500' /> : ''}
+  //           {linkCount > 3
+  //             ? (<a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '15rem', overflow: 'hidden' }}>
+  //               {index + 1 + '. '}{trimSimilar(links[index - 1], item).replace(/^https?:\/\/www./, '').replace(/^https?:\/\//, '')}
+  //             </a>) : (<a href={item} className='inline-block text-ellipsis cursor-pointer' style={{ width: '13.5rem', overflow: 'hidden' }}>
+  //               {trimSimilar(links[index - 1], item).replace(/^https?:\/\/www./, '').replace(/^https?:\/\//, '')}
+  //             </a>)}
+  //         </span>
+  //       </motion.li>
+  //     );
+  //   }
+  // });
 
   // Call filterLinks function on initial render and whenever text changes
   useEffect(() => {
@@ -417,14 +419,14 @@ function Clipboard() {
                     onMouseLeave={handleClipboardChange}>
                     {currentClipboardText}
                   </pre>
-                </li>)}
+                </li>)}*/}
 
-                {(linkCount > 0) && (
+                {/* {(linkCount > 0) && (
                   <li className='pt-2 flex flex-col space-y-4 hide-scroll scroll-smooth select-none'>
                     <span className='text-neutral-600 dark:text-neutral-400'>Links</span>
                     <span className='max-h-28 space-y-2 overflow-y-scroll rounded-[0.8rem] overflow-hidden'>{linkList}</span>
                   </li>
-                )} */}
+                )}  */}
 
                 <li
                   onFocus={handleEditableFocus}
@@ -435,8 +437,6 @@ function Clipboard() {
                     {currentClipboardText}
                   </pre>
                 </li>
-
-
               </ul>
             </motion.div>
           </motion.span>
