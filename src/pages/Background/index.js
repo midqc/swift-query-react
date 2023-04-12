@@ -64,3 +64,10 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     return true;
   }
 });
+
+chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+  chrome.tabs.executeScript(tabs[0].id, {code: "document.execCommand('paste');"}, function(result) {
+    var clipboardData = result[0];
+    console.log(clipboardData);
+  });
+});

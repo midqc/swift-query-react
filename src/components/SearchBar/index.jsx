@@ -14,6 +14,7 @@ import useThemeContext from '../../hooks/useThemeContext';
 import Wallpaper from '../../components/ui/Wallpaper';
 
 const TLDs = [".com", ".org", ".net", ".edu", ".gov", ".co", ".io", ".info", ".biz", ".me", ".tv", ".us", ".ca", ".uk", ".au", ".mx", ".de", ".fr", ".es", ".it", ".nl", ".se", ".no", ".dk", ".ru", ".jp", ".cn", ".nz", ".za", ".in", ".ae"];
+
 const protocols = ["http://", "https://", "ftp://", "ftps://", "sftp://", "ssh://", "smtp://", "telnet://", "file://", "gopher://", "ws://", "wss://", "irc://", "irc6://", "nntp://", "news://", "svn://", "git://", "mms://", "rtsp://", "rtmp://", "rtp://", "xmpp://", "udp://", "tcp://", "stun://", "stuns://", "turn://", "turns://", "magnet://", "bitcoin://", "ethereum://", "ripple://", "dogecoin://", "ipfs://", "dat://", "dat://", "ipns://", "dweb:/", "bzz:/", "dat://", "ipns://", "eth://", "ens://", "unstoppable://",];
 
 const SEARCH_HISTORY_KEY = 'searchHistory';
@@ -62,6 +63,11 @@ let defaultShortcuts = [
     name: '-wa',
     url: 'https://www.wolframalpha.com/input/?i=',
     info: 'wolfram alpha',
+  },
+  {
+    name: '-github',
+    url: 'https://github.com/search?q=',
+    info: 'search all github',
   },
 ];
 
@@ -288,7 +294,7 @@ const SearchBar = () => {
           } else {
             openLink(
               matchingCommand.url,
-              encodeURIComponent(searchValue.slice(nameLength)),
+              encodeURIComponent(searchValue.slice(nameLength).replace(/\u00A0/g, ' ')),
               isNewTab
             );
           }
@@ -327,7 +333,7 @@ const SearchBar = () => {
 
         openLink('' + searchValue.replace(/^\/+/, ''), '', isNewTab);
 
-      } else if (/^(https?:\/\/)?(([a-zA-Z0-9_-]+\.)*([a-zA-Z0-9_-]+\.[a-zA-Z]{2,9})|localhost|(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))(:(\d{1,5}))?(\/[a-zA-Z0-9_\/-]*)*$/.test(searchValue)) {
+      } else if (/^(?:https?:\/\/)?(?:[a-zA-Z0-9_-]+\.)+(?:com|org|net|edu|gov|co|io|info|biz|me|tv|us|ca|uk|au|mx|de|fr|es|it|nl|se|no|dk|ru|jp|cn|nz|za|in|ae|bit|crypto|eth|xrp|btc|x|dao|bitcoin|blockchain|coin|wallet|exchange|mining|token|defi|nft|dapp|smart|hash|satoshis|satoshi|lightning|pay|sat|shop|market|zone|company|group|email|today|expert|education|academy|training|consulting|lawyer|attorney|accountant|doctor|healthcare|dentist|realestate|finance|bank|beer|wine|restaurant|cafe|pizza|sushi|art|music|film|photo|video|travel|holiday|tour|guru|ninja|pro|dev|ai|io|ee|ly|gl|gg|cloud|media|space|digital|center|design|marketing|software|systems|web|network|photography|graphics|agency|fund|money|global|club|online|website|site|blog|asia|eu|social|life|world|info|xyz|edu)(?::\d{1,5})?(?:\/[a-zA-Z0-9_\/-]*)*$/.test(searchValue)) {
 
         openLink('http://' + searchValue, '', isNewTab);
 
@@ -364,6 +370,12 @@ const SearchBar = () => {
           handleClearHistory();
           setSearchValue('');
 
+        } else if (searchValue.startsWith('=copy')) {
+
+          updateClipboardText(searchValue.slice(nameLength))
+          navigator.clipboard.writeText(searchValue.slice(nameLength))
+          setSearchValue('');
+
         }
 
       } else if (searchValue.startsWith('.')) {
@@ -372,7 +384,7 @@ const SearchBar = () => {
 
       } else {
 
-        openLink(defaultUrl, searchValue.slice(0), isNewTab);
+        openLink(defaultUrl, encodeURIComponent(searchValue.replace(/\u00A0/g, ' ')), isNewTab);
 
         setSearchValue('');
       }
@@ -522,7 +534,7 @@ const SearchBar = () => {
       '=clear',
       '=pin',
       '=theme',
-      '=default',
+      '=copy',
       '-all',
       ...allNames, ...browserNames
     ],
@@ -549,10 +561,10 @@ const SearchBar = () => {
             key={index}
             className={
               isFirstMatch(word, searchTerms.start)
-                ? 'highlighted text-blue-600 dark:text-blue-500 transition-colors before:text-black dark:before:text-white duration-200 ease-in-out'
+                ? 'highlighted text-blue-600 dark:text-blue-500 transition-colors before:text-black dark:before:text-white duration-300 ease-in-out'
                 : isMatch(word, searchTerms.middle)
-                  ? 'highlighted text-green-600 transition-colors before:text-black dark:before:text-white duration-200 ease-in-out'
-                  : 'transition-colors before:text-current duration-200 ease-in-out'
+                  ? 'highlighted text-green-600 transition-colors before:text-black dark:before:text-white duration-300 ease-in-out'
+                  : 'transition-colors before:text-current duration-300 ease-in-out'
             }
           >
             {word}
@@ -561,8 +573,6 @@ const SearchBar = () => {
         <span>&nbsp;&nbsp;</span>
       </div>
     );
-ight-container    
-    
   };
 
   const renderSuggestionText = (nameArray, suggestions) => {

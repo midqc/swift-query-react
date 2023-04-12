@@ -2,13 +2,14 @@ import React, { useState, useContext, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useMotionVariants } from '../../hooks/useMotionVariants';
 import Tooltip from '../Tooltip';
+import SmartTooltip from '../SmartTooltip'
 
 import './index.css'
 
 import WindowDiv from '../../components/ui/WindowDiv';
 import { ClipboardContext } from '../../context/globalContext';
 
-import { NotesIcon, TipsIcon, OptionsIcon, ClipboardIcon, VideoIcon, PluginsIcon, MoreAppsIcon, CrossIcon, PinIcon, TrashIcon, AppendIcon, FuseIcon, BoxCheckedIcon, BoxUncheckedIcon, CopyIcon, InternetIcon, IFrameIcon, AppsIcon, TriDownIcon } from '../Icons';
+import { NotesIcon, TipsIcon, OptionsIcon, ClipboardIcon, VideoIcon, PluginsIcon, MoreAppsIcon, CrossIcon, PinIcon, TrashIcon, AppendIcon, FuseIcon, BoxCheckedIcon, BoxUncheckedIcon, CopyIcon, SearchIcon, IFrameIcon, OpenAppsIcon, TriDownIcon, CheckIcon, InternetIcon } from '../Icons';
 
 const iconDefaultClass = 'dark:fill-white/60 fill-black/80'
 
@@ -29,7 +30,7 @@ const DockIconContainer = (props) => {
             dragTransition={{ bounceStiffness: 200, bounceDamping: 20 }}
             dragElastic={0.5}
             whileDrag={{ cursor: "grabbing" }}
-            className='h-[62px] w-[62px] p-4 scale-[1.2rem] cursor-pointer flex justify-center items-center rounded-[1.3rem] shadow-sm focus:outline-none select-none dark:bg-white/[0.03] bg-black/20'
+            className='h-[62px] w-[62px] p-4 scale-[1.2rem] cursor-pointer flex justify-center items-center rounded-[1.3rem] shadow-sm focus:outline-none select-none dark:bg-white/[0.03] bg-black/10'
             transition={{
                 type: 'spring',
                 restDelta: 0.001,
@@ -178,11 +179,11 @@ const Dock = () => {
         }
     }, [textAreaValue]);
 
-    const handleDownloadClick = (textInput, fileExtension = '.txt') => {
+    const handleDownloadClick = (textInput, fileExtension = '') => {
         let text = textInput;
         let fileName = '';
 
-        if (customFileName.found) {
+        if (customFileName.found && fileExtension === '') {
             text = customFileName.fileText;
             fileName = customFileName.fileName;
         } else if (fileExtension.lastIndexOf(".") > 0 && fileExtension.lastIndexOf(".") < fileExtension.length - 1
@@ -546,14 +547,6 @@ const Dock = () => {
     function detectCodeType(code) {
         let extensions = [];
 
-        if (isReactCode(code)) {
-            if (/export\s+default\s+([^\s;]+)/.test(code)) {
-                let jsxName = RegExp.$1 + '.jsx';
-                extensions.push(`${jsxName}`, '.tsx');
-            } else {
-                extensions.push('.jsx');
-            }
-        }
         if (isGoCode(code)) {
             extensions.push('.go');
         }
@@ -571,6 +564,7 @@ const Dock = () => {
         }
         if (isJsCode(code)) {
             extensions.push('.js');
+            extensions.push('.ts');
         }
         if (isPyCode(code)) {
             extensions.push('.py');
@@ -616,6 +610,16 @@ const Dock = () => {
         }
         if (isDockerfileCode(code)) {
             extensions.push('.dockerfile');
+        }
+        if (isReactCode(code)) {
+            if (/export\s+default\s+([^\s;]+)/.test(code)) {
+                let jsxName = RegExp.$1 + '.jsx';
+                extensions = [`${jsxName}`]
+                extensions.push('.tsx');
+            } else {
+                extensions.push('.jsx');
+                extensions.push('.tsx');
+            }
         }
 
         if (extensions.length > 0) {
@@ -691,6 +695,7 @@ const Dock = () => {
 
     return (
         <>
+        <div className='flex w-screen z-40 h-fit justify-center items-center absolute bottom-[192px]'><motion.span transition={{ type: "spring", restDelta: 0.001, ...smoothMotion, }} initial={{ rotate: 180, y: 20 }} animate={{ rotate: 180, y: 0 }}  whileTap={{ scale: 0.8 }} className='px-3 py-[0.3rem] bg-neutral-100 dark:bg-[#2C2C2C] rounded-lg flex items-center justify-center cursor-pointer shadow-sm'><TriDownIcon height="12" className="fill-neutral-500" /></motion.span></div>
             <div ref={rootRef} className='flex w-screen z-40 h-fit justify-center items-center absolute bottom-[64px] ' style={{ pointerEvents: 'none' }}>
                 <motion.div
                     initial={{ scale: 1.2 }}
@@ -703,7 +708,7 @@ const Dock = () => {
                     id='dock-container' className='flex flex-row h-24 items-center justify-center border-highlight border-[1px] border-black/20 dark:border-white/5 space-x-4 p-4 backdrop-blur-xl rounded-[2.3rem] shadow-lg bg-neutral-100/60 dark:bg-neutral-800/80' style={{ pointerEvents: 'auto' }}>
 
                     <div onClick={() => !isNotesPinned ? setIsNotesVisible(!isNotesVisible) & setIsCurrentWindow('notes') : setIsCurrentWindow('notes')}>
-                        <DockIconContainer><NotesIcon className={iconDefaultClass} /></DockIconContainer>
+                   <DockIconContainer><NotesIcon className={iconDefaultClass} /></DockIconContainer>
                     </div>
 
                     <div onClick={() => !isClipboardPinned ? setIsClipboardVisible(!isClipboardVisible) & setIsCurrentWindow('clipboard') : setIsCurrentWindow('clipboard')} onDragOver={(event) => {
@@ -740,7 +745,7 @@ const Dock = () => {
                     <DockSeparator />
 
                     <div onClick={() => setIsOptionsVisible(!isOptionsVisible) & setIsCurrentWindow('options')} className='flex flex-col justify-center items-center'>
-                        <DockIconContainer><OptionsIcon className={iconDefaultClass} /></DockIconContainer>
+                    <DockIconContainer><OptionsIcon className={iconDefaultClass} /></DockIconContainer>
                     </div>
 
                     {/* <Tooltip
@@ -756,7 +761,7 @@ const Dock = () => {
                 </motion.div>
             </div>
 
-            <container onClick={() => isCurrentWindow !== 'notes' && setIsCurrentWindow('notes')}>
+            <container onMouseDown={() => isCurrentWindow !== 'notes' && setIsCurrentWindow('notes')}>
                 <WindowDiv windowVisible={isNotesVisible ? true : false} windowIndex={isCurrentWindow === 'notes' ? 999 : (isNotesVisible && !isNotesPinned ? 99 : 9)}>
                     <div className='flex flex-row items-center justify-between pointer pointer-events-none' >
                         <span className='text-2xl text-neutral-600 dark:text-neutral-400 flex flex-row w-fit items-center justify-center select-none bottom-0 font-default-light'>
@@ -803,7 +808,7 @@ const Dock = () => {
                 </WindowDiv>
             </container>
 
-            <container className='relative' onClick={() => isCurrentWindow !== 'clipboard' && setIsCurrentWindow('clipboard')}>
+            <container className='relative' onMouseDown={() => isCurrentWindow !== 'clipboard' && setIsCurrentWindow('clipboard')}>
                 <WindowDiv windowVisible={isClipboardVisible ? true : false} windowIndex={isCurrentWindow === 'clipboard' ? 999 : (isClipboardVisible && !isClipboardPinned ? 99 : 9)}>
                     <div className='flex flex-row items-center justify-between pointer-events-none'>
                         <span className='text-2xl text-neutral-600 dark:text-neutral-400 flex flex-row w-fit items-center justify-center select-none bottom-0 font-default-light'>
@@ -840,10 +845,10 @@ const Dock = () => {
                         <div className='flex flex-col space-y-4 w-[-webkit-fill-available]'>
                             <span className='text-xl text-neutral-600 dark:text-neutral-400 select-none flex flex-row space-x-4 justify-between items-center'>
                                 <motion.div layout={{ type: "position" }} onClick={() => setIsHistoryEnabled(!isHistoryEnabled)} className='flex justify-center items-baseline flex-row' initial="rest" whileHover="hover" animate="rest"><motion.div variants={CheckboxMotion}>{isHistoryEnabled ? <BoxCheckedIcon height='16px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' /> : <BoxUncheckedIcon height='16px' className='mr-2 fill-neutral-600/40 dark:fill-neutral-400/40' />}</motion.div><motion.div variants={TextMotion}>History</motion.div></motion.div>{clipboardTextHistory.length > 1 && <motion.span initial={{ translateX: '20%' }} animate={{ translateX: '0' }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.95 }} className='flex flex-row justify-center items-center px-3 py-1 rounded-xl bg-black/5 dark:bg-white/[0.03] text-sm cursor-pointer text-neutral-600 dark:text-neutral-400 outline-none' onClick={() => clearHistory()}>Clear All</motion.span>}</span>
-                            {clipboardTextHistory.length <= 1 && <motion.span layout={{ type: "position" }} initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} className='rounded-xl bg-black/5 dark:bg-white/[0.03] px-2 py-1 text-neutral-600/60 text-base dark:text-neutral-400/20 flex flex-row justify-center items-center select-none h-[5.32rem] text-center'>Make changes<br />to enable history</motion.span>}
+                            {clipboardTextHistory.length <= 1 && <motion.span layout={{ type: "position" }} initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} className='rounded-xl bg-black/5 dark:bg-white/[0.03] px-2 py-1 text-neutral-600/60 text-base dark:text-neutral-400/20 flex flex-row justify-center items-center select-none h-[5.32rem] text-center'>Make changes<br/>to enable history</motion.span>}
                             {clipboardTextHistory.length > 1 && <ul className='text-base text-neutral-500 select-none overflow-y-scroll hide-scroll space-y-4 rounded-xl max-h-[43%]'>
                                 {clipboardTextHistory.map((text, index) => (
-                                    index > 0 && <div className='relative group'><motion.li layout={{ type: "position" }} key={index} onClick={() => updateClipboardText(text) & navigator.clipboard.writeText(textAreaValue) & setTextAreaValue(text)} initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='rounded-xl outline-none h-[5.32rem] overflow-hidden bg-black/5 dark:bg-white/[0.03] px-4 py-2 cursor-pointer' style={{ overflowWrap: 'anywhere' }}>
+                                    index > 0 && <div className='relative group'><motion.li layout={{ type: "position" }} key={index} onClick={() => updateClipboardText(text) & navigator.clipboard.writeText(text) & setTextAreaValue(text)} initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='rounded-xl outline-none h-[5.32rem] overflow-hidden bg-black/5 dark:bg-white/[0.03] px-4 py-2 cursor-pointer' style={{ overflowWrap: 'anywhere' }}>
                                         {text}
                                     </motion.li>
                                         {/* <button className='p-2 h-8 w-8 rounded-lg absolute top-2 right-2 flex-row flex items-center justify-center transition-all ease-in-out duration-300 scale-75 opacity-0 group-hover:opacity-100 group-hover:scale-100 active:scale-75 outline-none' onClick={() => deleteClipboardTextHistory(index)}><TrashIcon className='fill-neutral-400 dark:fill-neutral-600' /></button> */}
@@ -873,7 +878,7 @@ const Dock = () => {
                 </WindowDiv>
             </container>
 
-            <container onClick={() => isCurrentWindow !== 'options' && setIsCurrentWindow('options')}>
+            <container onMouseDown={() => isCurrentWindow !== 'options' && setIsCurrentWindow('options')}>
                 <WindowDiv windowVisible={isOptionsVisible ? true : false} windowIndex={isCurrentWindow === 'options' ? 999 : (isOptionsVisible ? 99 : 9)}>
                     <div className='flex flex-row items-center justify-between pointer-events-none' >
                         <span className='text-2xl text-neutral-600 dark:text-neutral-400 flex flex-row w-fit items-center justify-center select-none bottom-0 font-default-regular'>

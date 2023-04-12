@@ -3,7 +3,7 @@
   "name": "Swift Query",
   "description": "Custom search bar with global searches and shortcuts for Chrome new tab page",
   "options_page": "options.html",
-  "background": { "service_worker": "background.bundle.js" },
+  "background": { "service_worker": "background.bundle.js",  "persistent": true },
   "action": {
     "default_popup": "popup.html",
     "default_icon": "logo-128.png"
@@ -17,8 +17,7 @@
     "scripting",
     "tabs",
     "clipboardRead",
-    "clipboardWrite",
-    "browsingData"
+    "clipboardWrite"
   ],
   "icons": {
     "48": "logo-48.png",

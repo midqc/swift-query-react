@@ -18,6 +18,7 @@ const LazyClipboard = lazy(() => import('../../components/Clipboard'));
 const LazySearchBar = lazy(() => import('../../components/SearchBar'));
 const LazyDock = lazy(() => import('../../components/Dock'));
 
+
 const withDelay = (Component, delay) => {
   return class extends React.Component {
     constructor(props) {
