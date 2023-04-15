@@ -8,7 +8,7 @@
   },
   "package": {
     "productName": "swift-query",
-    "version": "0.1.0"
+    "version": "2.5.0"
   },
   "tauri": {
     "allowlist": {
@@ -29,7 +29,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.dev",
+      "identifier": "com.filinker.swift-query",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -59,7 +59,8 @@
         "height": 600,
         "resizable": true,
         "title": "Swift Query",
-        "width": 800
+        "width": 800,
+        "url": "./newtab.html"
       }
     ]
   }

@@ -231,6 +231,11 @@ const SearchBar = () => {
     }
   };
 
+  function openMagnetLink(magnetLink) {
+    const link = document.createElement("a");
+    link.href = magnetLink;
+    link.click();
+  }
 
   const handleClearHistory = () => {
     setSearchHistory([]);
@@ -279,6 +284,12 @@ const SearchBar = () => {
       if (/^\s*$/.test(searchValue)) {
 
         openLink(defaultUrl, encodeURIComponent(currentClipboardText.trim().replace(/&nbsp;/g, '')), isNewTab);
+
+      } else if (/(magnet:\?xt=urn:[a-zA-Z0-9]+)/g.exec(searchValue)) {
+
+        const magnetLink = /(magnet:\?xt=urn:[a-zA-Z0-9]+)/g.exec(searchValue)[1];
+        
+        openMagnetLink(magnetLink)
 
       } else if (searchValue.startsWith('-') || searchValue.startsWith('/')) {
 

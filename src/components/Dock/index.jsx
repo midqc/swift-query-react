@@ -674,11 +674,11 @@ const Dock = () => {
 
     const TextMotion = {
         rest: {
-            x: '-26px',
+            x: '-24px',
             transition: { type: 'spring', restDelta: 0.001, ...smoothMotion }
         },
         hover: {
-            x: '-26px',
+            x: '-24px',
             transition: { type: 'spring', restDelta: 0.001, ...smoothMotion }
         }
     };
@@ -845,8 +845,8 @@ const Dock = () => {
                         <div className='flex flex-col space-y-4 w-[-webkit-fill-available]'>
                             <span className='text-xl text-neutral-600 dark:text-neutral-400 select-none flex flex-row space-x-4 justify-between items-center'>
                                 <motion.div layout={{ type: "position" }} onClick={() => setIsHistoryEnabled(!isHistoryEnabled)} className='flex justify-center items-baseline flex-row' initial="rest" whileHover="hover" animate="rest"><motion.div variants={CheckboxMotion}>{isHistoryEnabled ? <BoxCheckedIcon height='16px' className='mr-2 fill-neutral-600 dark:fill-neutral-400' /> : <BoxUncheckedIcon height='16px' className='mr-2 fill-neutral-600/40 dark:fill-neutral-400/40' />}</motion.div><motion.div variants={TextMotion}>History</motion.div></motion.div>{clipboardTextHistory.length > 1 && <motion.span initial={{ translateX: '20%' }} animate={{ translateX: '0' }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.95 }} className='flex flex-row justify-center items-center px-3 py-1 rounded-xl bg-black/5 dark:bg-white/[0.03] text-sm cursor-pointer text-neutral-600 dark:text-neutral-400 outline-none' onClick={() => clearHistory()}>Clear All</motion.span>}</span>
-                            {clipboardTextHistory.length <= 1 && <motion.span layout={{ type: "position" }} initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} className='rounded-xl bg-black/5 dark:bg-white/[0.03] px-2 py-1 text-neutral-600/60 text-base dark:text-neutral-400/20 flex flex-row justify-center items-center select-none h-[5.32rem] text-center'>Make changes<br/>to enable history</motion.span>}
-                            {clipboardTextHistory.length > 1 && <ul className='text-base text-neutral-500 select-none overflow-y-scroll hide-scroll space-y-4 rounded-xl max-h-[43%]'>
+                            {clipboardTextHistory.length <= 1 && <motion.span layout={{ type: "position" }} initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} className='rounded-xl bg-black/5 dark:bg-white/[0.03] px-2 py-1 text-neutral-600/40 text-lg dark:text-neutral-400/20 flex flex-row justify-center items-center select-none h-[5.32rem] text-center'>Make changes<br/>to enable history</motion.span>}
+                            {clipboardTextHistory.length > 1 && <motion.ul layout={{ type: "position" }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} className='text-base text-neutral-500 select-none overflow-y-scroll hide-scroll space-y-4 rounded-xl max-h-[43%]'>
                                 {clipboardTextHistory.map((text, index) => (
                                     index > 0 && <div className='relative group'><motion.li layout={{ type: "position" }} key={index} onClick={() => updateClipboardText(text) & navigator.clipboard.writeText(text) & setTextAreaValue(text)} initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} whileTap={{ scale: 0.9 }} className='rounded-xl outline-none h-[5.32rem] overflow-hidden bg-black/5 dark:bg-white/[0.03] px-4 py-2 cursor-pointer' style={{ overflowWrap: 'anywhere' }}>
                                         {text}
@@ -854,7 +854,7 @@ const Dock = () => {
                                         {/* <button className='p-2 h-8 w-8 rounded-lg absolute top-2 right-2 flex-row flex items-center justify-center transition-all ease-in-out duration-300 scale-75 opacity-0 group-hover:opacity-100 group-hover:scale-100 active:scale-75 outline-none' onClick={() => deleteClipboardTextHistory(index)}><TrashIcon className='fill-neutral-400 dark:fill-neutral-600' /></button> */}
                                     </div>
                                 ))}
-                            </ul>}
+                            </motion.ul>}
                             <div className='flex flex-col space-y-4 '>
                                 <motion.span layout={{ type: "position" }} transition={{ type: 'spring', restDelta: 0.001, ...smoothMotion, }} className='text-xl text-neutral-600 dark:text-neutral-400 select-none'>Actions</motion.span>
                                 <div className='flex flex-wrap -m-1'>

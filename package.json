@@ -10,6 +10,7 @@
   "scripts": {
     "build": "node utils/build.js",
     "start": "node utils/webserver.js",
+    "dev": "npm run build && npm run start",
     "tailwind": "npx tailwindcss -i ./tailwind.input.css -o ./src/pages/tailwind.css --watch",
     "prettier": "prettier --write '**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
     "tauri": "tauri"
